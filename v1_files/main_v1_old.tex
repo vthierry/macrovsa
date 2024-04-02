@@ -1,0 +1,940 @@
+\documentclass[sn-mathphys]{sn-jnl}
+\usepackage[utf8]{inputenc}
+%\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage[normalem]{ulem}
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+\usepackage{url}
+%\usepackage[hidelinks,breaklinks]{hyperref}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{lscape}
+\usepackage{listings}
+\usepackage{rotating}
+\usepackage{titlesec}
+\titleformat*{\subsubsection}{\em}
+\newcommand{\vthierry}[1]{{\color{magenta} @vthierry:[#1]}}
+\newcommand{\chloe}[1]{{\color{blue} @chloe:[#1]}}
+%\newcommand{\fred}[1]{{\color{red} @fred:[#1]}}
+\newcommand{\defq}{\stackrel {\rm def}{=}}
+\newcommand{\tab}{\hphantom{~}}
+\newcommand{\drawn}{\stackrel {\text{drawn}}{=}}
+\newcommand{\eqline}[1]{~\vspace{0.1cm}\\\centerline{$#1$}\vspace{0.1cm}\\}
+\newcommand{\hhref}[1]{\href{#1}{#1}}
+
+
+\begin{document}
+
+\title[Where is Aristotle in our brain?]{Where is Aristotle in our brain? On biologically plausible reasoning embedded in neuronal computation.}
+\author[1,2]{\fnm{Thierry} \sur{Viéville}}\email{thierry.vieville@inria.fr}
+\author[1]{\fnm{Chloé} \sur{Mercier}}\email{chloe.mercier@inria.fr}
+\equalcont{Supported by \href{Inria, AEx AIDE}{https://team.inria.fr/mnemosyne/en/aide}.}
+\affil[1]{Mnemosyne Team, Inria Bordeaux, U. Bordeaux, LaBRI and IMN}
+\affil[2]{LINE Laboratory, U. Côte d'Azur}
+
+\abstract{
+
+Human cognition involves tightly interleaved numerical but also symbolic, including logical, computations. How can the brain implement such processing is an important issue, and we would like to address some aspects here, combining two approaches.
+
+On the one hand, ontology-oriented languages allow us to describe symbolic structured knowledge and perform logical inference using entailment rules. To what extent this could provide a rather natural representation of usual human reasoning is an open question, that we are going to discuss here, considering a generalization to modal logic, and also beyond deductive reasoning, discussing whether this could also apply to inductive and abductive reasoning.
+
+On the other hand, spiking neuronal networks are biologically plausible implementations of brain circuit computations, which can provide a way to manipulate symbols embedded as numeric vectors that carry semantic information. In the present work, we consider such an architecture with the Vector Symbolic Architecture (VSA) formalism allowing us to describe neuronal implementations at an algebraic level.
+
+This development illustrates how the former cognitive mechanisms can naturally emerge from usual distributed calculus, yielding neuro-symbolic computations. Our argument is to show that it can be implemented, considering a VSA approach, into biological neuronal computations. Such neuro-symbolic deductive mechanisms are especially useful in problem-solving, where a constrained path is to be determined between some initial and final symbolic states.
+}
+
+\keywords{Ontology, Modal Logic, Semantic Pointer Architecture, Abstract Thought, Neuro-symbolism, Problem Solving.}
+
+\maketitle
+
+%\tableofcontents
+
+\section{Introduction}
+
+\subsection{Describing cognitive knowledge and inference}
+
+\subsubsection{From sensorimotor processing to logical reasoning}
+
+It is generally admitted (as reviewed, e.g., in \cite{ness_knowledge_2007}) that human logical reasoning emerges progressively from the sensorimotor association, with the formation of stable concepts, even at a symbolic level, before being able to manipulate them at a concrete level, performing inductive reasoning, up to more formal deductive reasoning. Furthermore, as pointed out in \cite{arnett_adolescence_2001}, such a mechanism includes a cultural bias, since not all cultures feel the need to develop formal logical operation competencies, and obviously most people do not use such formal operations in all aspects of their lives. However, as discussed in, e.g., \cite{keefer_metaphor_2016}, deductive reasoning, especially for goal-driven behavior, is deeply interleaved with heuristic deduction, involving analogy and metaphor. Furthermore, as thoroughly studied by, e.g., \cite{purves_interplay_2001}, the experience of conscious or subconscious emotion has a powerful influence on rational decisions, including the choice of alternatives in deductive reasoning. Does this mean that the human brain does {\em not} need to develop deductive reasoning, except for singular cultural need (e.g., for scholarship constraints or to practice formal science)? Our understanding is that the situation is not binary. We need to make deductions to solve everyday life problems, while the elements we briefly reviewed here, demonstrate that such deductions are not Boolean (either true or false) but related to a given context, weighted by a certain level of belief, and biased by motivational elements in the wide sense.
+
+In this study, we attempt to reconcile deductive reasoning with such cognitive mechanisms of inference, up to a biologically plausible neuronal implementation and show to what extent this could be extended to approximate deductive reasoning, in addition to inductive and abductive reasoning mechanisms\footnote{Here we make the distinction between:
+\\- {\em deductive reasoning} for the formal logical consequence of some assumptions, considered as true, or approximately true;
+\\- {\em inductive reasoning} which is the process of inferring some general principle from a set of knowledge and plausible induction rules;
+\\- {\em abductive reasoning} is the process of inferring an explanation of some assertions, i.e., hypothesizing the precondition of a consequence.}.
+
+\subsubsection{Modal logic and belief representation}
+
+Information is always related to a certain degree of belief. While almost all partially known information is related to probability, the human ``level of truth'' is more subtle and related to possibility and necessity, as formalized in the possibility theory discussed in \cite{denoeux_representations_2020} and \cite{denoeux_representations_2020-1}. This theory stems from modal logic, i.e., something true in a ``given context'' \cite{fischer_modal_2018}, which is also considered representative of what is modeled in educational science and philosophy \cite{rusawuk_possibility_2018} namely commonsense reasoning in Piaget's sense \cite{smith_development_1994}, taking exceptions into account, i.e., considering non-monotonic reasoning. In other words, possibility theory is devoted to the modeling of incomplete information, related to an observer's belief regarding a potential event and surprise after the event occurrence. Furthermore, in symbolic artificial intelligence, i.e., knowledge representation and logical inference, a link has been drawn between this necessity/possibility dual representation and ontology \cite{tettamanzi_possibilistic_2017}. This must be understood as a deterministic theory, in the sense that partial knowledge is not represented by randomness\footnote{This deterministic representation of partial knowledge can be generalized in order to also include a representation of randomness belief. In the vanilla possibility theory, the possibility can be seen as an upper probability: Any possibility distribution defines a set of admissible probability distributions, i.e., a consonant plausibility measure in Dempster–Shafer theory of evidence \cite{beynon_dempstershafer_2000}. In \cite{vallaeys_generaliser_2021,vieville_representation_2022} it is proposed to bound approximate probability, reconsidering the original notion of necessity, in order to also consider a lower bound of probability. This could be an interesting extension for the present work.}. Given these elements, is thus interesting to represent approximate knowledge at the cognitive level by a degree of belief in relation to the notion of possibility and necessity. This will be further developed at a technical level in the sequel.
+
+\subsubsection{Knowledge representation}
+
+From early artificial intelligence knowledge representation such as, say, frames avowed previously, to modern web semantic data structures, the basic idea of symbolic representation is to consider symbols representing objects and express knowledge through relationships, i.e., triple statements of the form {\tt (\$subject, \$predicate, \$object)}, as schematized in Fig.~\ref{triple}.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.5\textwidth]{figures/triple.png}}
+\caption{Atomic representation of knowledge: To express some knowledge regarding a symbol, the subject, we define a feature, with a predicate, with an object as an attribute (i.e., a quantitative data value or a qualitative symbol).}
+\label{triple}
+\end{figure}
+
+Following, e.g., \cite{gardenfors_conceptual_2004}, we start by introducing the notion of concept, with the simple common idea that a concept can be defined by ``feature dimensions'', i.e., attributes with some typed value. The object can be either qualitative or quantitative ``data'', or another object, stating relations between objects. This is also the basic syntax of ontology languages. In the brain, such feature dimensions are usually anchored in sensorimotor feature spaces \cite{freksa_strong_2015}, in coherence with the present presentation. Furthermore, given a concept, as developed in \cite{gardenfors_conceptual_2004}, this choice of representation induces the notion of prototypes, that allows representing the state space region corresponding to the concept.
+
+A step further, the meaning of a concept is completed by relations between concepts, i.e. predicates. Predicates can be generic, in the sense of e.g. \cite{mcclelland_parallel_2003}, defining hierarchical taxonomy using the ``{\tt is-a}'' predicate, as in almost any such language, but also capability ``{\tt can}'', extrinsic qualities ``{\tt has}'' and intrinsic qualities ``{\tt is}'', thus four general predicates. They can also be unconstrained, as in the RDFS framework (see e.g., \cite{noy_ontology_2001} for an introduction), describing any property and in that case, properties also form a taxonomy\footnote{For instance stating that {\tt Amid is-a-descendant-of Yang-Li} implied that {\tt Amid is-a-relative-of Yang-Li} the former property being a sub-property of the latter. This example also illustrates that such properties have meta-property, such as being transitive or symmetric.}. This is further illustrated in section~\ref{hierarchical}. Conversely, as a limit case, we could consider relationships between subjects and objects only, without taking into account the nature of that relationship (predicate) or its direction.
+
+An important point is that features can be hierarchical because the value itself may have some features: for instance, a quantitative physical value is not only a ``number'' stating the current or default value, it may also be specified by a unit and a precision value or some bounds. In terms of data structure, this forms a tree, and the whole data structure is a set of trees, i.e. a forest, thus a graph.
+
+We are going to specify how we can represent such symbolic information at a biologically plausible level in the present study, thanks to vector symbolic architectures introduced now.
+
+\subsection{Representing neuronal activity at a symbolic level}
+
+As a possible entry to consider a biologically plausible implementation at a symbolic level, Vector Symbolic Architectures (VSA) was introduced as a way to manipulate symbolic information represented as numeric vectors (see e.g. \cite{levy_vector_2008} for an introduction). VSAs have been proven helpful to model high-level cognition and account for multiple biological features \cite{gayler_vector_2003,eliasmith_how_2013}. More specifically, the Semantic Pointer Architecture (SPA) \cite{eliasmith_how_2013} instantiates so-called semantic pointers (i.e. vectors that carry semantic information) and their manipulation in networks of spiking neurons. This approach makes a significant step towards the unification of symbolic and sub-symbolic processing in that it provides a way to translate the former into the latter. Consequently, complex knowledge representation in the form of compositional structures that are traditionally restricted to symbolic approaches can now be distilled in numerical and even neural\footnote{The term "neural" refers to any type of nerve cell, whereas "neuronal" is specifically related to neurons.} systems \cite{crawford_biologically_2016}.
+
+\subsubsection{The basic idea of distributed representation}
+
+How can we represent a symbol in a neuronal assembly? A localist representation (one neuron or neuron group by symbol) does not correspond to what is observed in the brain, and the basic idea is that a symbol corresponds to a pattern of activity of the whole assembly. Let us consider a spiking neuron network and quantify its activity by some statistics, e.g. the neuron rates, or higher order statistics (see e.g. \cite{cessac_dynamics_2008} for a discussion). As developed in \cite{eliasmith_neural_2002}, this includes timing codes and population codes (i.e., relative timing codes between neurons) and the authors show how with their developed Neural Engineering Framework (NEF) we can collect this high dimensional set of bounded quantitative values, which can be normalized, as a unitary stochastic vector in a huge dimensional space (of a few thousands for a biological neuronal map, often a few hundred at the simulation level), defining a Semantic Pointer Architecture. This includes a time representation in spiking neuron systems, not only a rate representation. The key point is that compared to other representations, e.g., based on synchrony within the neural assembly, the NEF alternative is much more scalable.
+
+In the present study, we consider these developments as prerequisites and will simply consider that neural assembly activity is represented by a high dimensional unary stochastic vector. We also need to specify transformations and will define them at this abstract algebraic level. Mainly, following \cite{mercier_ontology_2021} we will consider the auto-association mechanism, as developed in \cite{stewart_biologically_2011} and functional transformations as detailed in \cite{eliasmith_neural_2002}, their development is based, in a nutshell, on parameterized kernel-based approaches.
+
+\subsubsection{On numerical versus semantic grounding}
+
+A step further, how does the brain give meaning to symbols considered here? We will not address this issue here but would like to clarify some points. First of all, in neuro-symbolic studies, as reviewed in \cite{garcez_neurosymbolic_2020}, grounding is understood as the process to embed symbolic computations onto real-valued features \cite{badreddine_logic_2021} because it allows providing a semantic interpretation or model (in the sense of a model of a set of logical assertions) of the symbolic system. This means that it is no more an abstract set of assessments (potentially without any concrete implementation) but something that corresponds to a real formal object.
+
+This differs from the symbol grounding problem as reviewed and discussed in \cite{taddeo_solving_2005}, where symbols are linked to their meaning, and anchored in sensorimotor features, which involves the capacity to pick referents of concepts and a notion of consciousness. In a nutshell, this is still an open problem, that we are not going to address here. However, proposals to link abstract symbols to the neuronal reality, enrich the issue of how mental states can be meaningful. Furthermore, the fact our abstract representation is anchored in sensorimotor features, is also a link between symbols and their potential referent. A step further, when we represent concepts, the chosen design choice associates prototypes, allowing us to anchor an abstract element to a concrete example.
+
+Another aspect not targeted by the present study, is the emergence of symbols, i.e., the fact that a symbolic representation emerges from a biological or any physical system in interaction with its environment. This issue corresponds to ungrounding of concrete signs\footnote{In the semiotic hierarchical meaning of ``icon'' only built from sensori-motor features, structures at an ``index'' level by concrete relationships between given objects, giving rise to ``symbol'' in the semiotic sense, corresponding to abstract general relationships between concrete concepts or sensori-motor features.} as discussed in, e.g. \cite{raczaszek-leonardi_ungrounding_2018} in link with the emergence of symbolic thinking (see e.g., \cite{villiers_why_2007} for a detailed discussion). At the computational neuroscience level, the issue is addressed in \cite{rougier_implicit_2009} for a toy experiment, emphasizing that to address such an issue, we must avoid explicitly embedding any symbol anywhere in the model, a priori or a posteriori. Here, we do not address the emergence issue, but in a sense a {\em feasibility} issue: to what extent event sophisticated symbolic processing can be anchored in numerical processing, not only rudimentary operators. We also address an {\em interpretation} issue, i.e. to what extent sub-symbolic sensorimotor anchored processing corresponds to symbolic processing, as discussed in the sequel.
+
+Our approach thus does not solve the grounding problem, but in some sense what we can call the ``anchoring'' problem of relating symbols with the neural substrate.
+
+\subsection{Paper contribution}
+
+We first revisit how to encode symbols, within the VSA approach based on the framework introduced in \cite{eliasmith_how_2013}, and thanks to a previous contribution of the authors, we also detail how to encode a related degree of belief, beyond binary information. We also analyze in more detail the numerical approximation statistic.
+
+This allows us to relate usual symbolic structures to neuronal distributed numerical representation, and our first contribution is to introduce a notion of a relational map, in order to have an operational distributed mechanism to manage hierarchical memory structure, as reviewed for instance in \cite{eichenbaum_memory_2017}, in complement to associative and sequential memorization. We also illustrate how existing VSA data structures can compare with usual programming language containers, to help have a better idea of the computational aspects of such cognitive memories.
+
+This new data structure is the basic tool, to then study to what extent symbolic inference could be implemented by specific connectivity feedback, and, as a second contribution, show that the vanilla fixed point algorithm used for a forward deduction on a decidable set of entailment rules can be adapted to this biologically plausible framework, allowing to perform deductively, but also to some extent using inductive and abductive deductions.
+
+We finally illustrate the proposed mechanism by both a simulation at the mesoscopic level, considering the well-established Nengo simulator, but also at a macroscopic scale, showing as the third contribution of this paper, that such computation may be, up to a certain point, approximated without explicitly computing at the vector component level, but using an algorithmic ersatz.
+
+\section{Symbolic information encoding} \label{encoding}
+
+\subsection{Symbol encoding}
+
+At the numerical level, each symbol is implemented as a randomly drawn fixed unit $d$-dimensional vector, $\mathbf{x} \in {\mathcal R}^d$. Typically $d\simeq 100 \cdots 1000$ and we expect to manipulate $k\simeq 100 \cdots 10000$ symbols, at the simulation level. In a cortical or brain map, the order of magnitude is higher since the vector corresponds to the neuronal map activity (thus closer to $10^{5\cdots 6}$ and the number of encoded symbols depends on which map is considered.
+
+The vector components are drawn from a normal distribution, divided by $\sqrt{d}$, in order to have a $O(1)$ magnitude.
+
+A similarity measure is now introduced in order to semantically compare two vectors. Classically, the cosine similarity (i.e., normalized dot product, denoted $\cdot$) is used to compute the semantic similarity between two unit vectors:
+\eqline{\mathbf{x} \cdot \mathbf{y} \defq \mathbf{x}^\top \mathbf{y} = \mbox{arccos}\left(\widehat{\mathbf{x}, \mathbf{y}}\right),}
+where $\mathbf{x}^\top$ denotes the transpose of $\mathbf{x}$.  It is in obvious correspondence with the angular distance between both vectors.
+
+The key property is that, provided that the space dimension $d$ is large enough, two randomly chosen different vectors will be approximately orthogonal. More precisely,
+\eqline{{\bf x} \cdot {\bf y} \sim {\mathcal N}(0, O(1/d)),}
+i.e., follows a centered normal distribution  \cite{schlegel_comparison_2020}, while by construction ${\bf x} \cdot {\bf x} \simeq 1$.
+
+This allows us to define a hypothesis to decide whether the ${\cal H}_0$ hypothesis ${\bf x} \cdot {\bf y} = 0$ can be rejected, we are in the situation of a two-tailed ``z-test'', with the alternative hypothesis ${\cal H}_0$ that ${\bf x} \cdot {\bf y} \neq 0$. Here the z-score\footnote{Given a distribution the z-score for $d$ samples is defined as
+\eqline{z \defq \frac{\bar{X} - \mu}{\sigma / \sqrt{d}}}
+with here the expected means is $\mu = 0$ the a priori standard-deviation is $\sigma = O(1/d)$ and the experimental mean $\bar{X} = ({\bf x} \cdot {\bf y})$ value is obtained from the dot-product.} is obviously, with $d$ samples and a known standard deviation of order of magnitude $O(1/d)$:
+\eqline{z \equiv \sqrt{d} \, ({\bf x} \cdot {\bf y}),}
+follows an almost distribution as it can be easily verified numerically, in Fig.~\ref{z_score}, left column. A step further considering two vectors that are not independent but have an angular dependency we can numerically observe, in Fig.~\ref{z_score}, right column, the similarity dependency as a function of the vector's relative orientation.
+
+\begin{figure}[htbp]
+\centerline{\begin{tabular}{cc}
+\includegraphics[width=0.5\textwidth]{figures/z_score_2.jpg} &
+\includegraphics[width=0.5\textwidth]{figures/z_score_2a.jpg} \\
+\includegraphics[width=0.5\textwidth]{figures/z_score_3.jpg} &
+\includegraphics[width=0.5\textwidth]{figures/z_score_3a.jpg} \\
+\end{tabular}}
+\caption{Numerical observation of the dot product of two random vectors for $d=100$ in the upper row and $d=1000$ in the lower row. The left columns show the histogram of the z-score $\sqrt{d} \, ({\bf z} \cdot {\bf y})$ for two normal vectors, in comparison with a normal distribution, these experimental distributions have a kurtosis about 10\% lower than 3, as expected for a normal distribution. The right columns show the $({\bf z} \cdot {\bf y})$ for a vector ${\bf z} \defq \cos(\theta) \, {\bf x} + \sin(\theta) \, {\bf y}$, given two random vectors ${\bf x}$ and ${\bf y}$ as a function of the angular dependency $\theta$, compared to $\cos(\theta)$ drawn as a thick curve.}
+\label{z_score}
+\end{figure}
+
+This allows on one hand to consider, for instance, a $\pm 2$ threshold on the standard deviation, in link with this z-score to have a confidence interval better than $99\%$, and to relate the similarity estimation to an angular dependence between two vectors, as detailed in Fig.~\ref{z_score}. To our best knowledge, this implementation recipe has not yet been made explicit.
+
+Furthermore, as detailed in Appendix~\ref{Algorithmic-ersatz}, this will allow us to propose to simulate the different operations defined in the sequel at a macroscopic scale.
+
+\subsection{Modality encoding}
+
+Based on this, most VSA approaches consider that 2 vectors \textbf{x} and \textbf{y} are semantically equivalent when this similarity $\tau$ equals 1, but with ways to interpret the result. Here, following \cite{mercier_ontology_2021}, we enrich the notion of being either false or true, by a numeric representation of, e.g., partial knowledge, as illustrated in Fig~\ref{possibility-necessity}. The true value corresponds to 1 (fully possible and fully necessary), the false value to -1 (neither possible nor necessary, i.e., impossible), and the unknown value to 0, which corresponds to a fully possible but absolutely not necessary value. This representation has been designed to be compatible with the ternary Kleene logic, besides being also coherent with respect to the possibility theory, as discussed in detail in \cite{vieville_representation_2022}, where this deterministic representation of partial knowledge is generalized in order to also include a probabilistic representation (using a 2D representation). In particular, we show that our representation is in one-to-one correspondence with the dual notion of necessity and possibility representation of the standard theory, which interest has been discussed in the introduction.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.8\textwidth]{figures/possibility-necessity.png}}
+\caption{Representation of partial truth $\tau \in [-1,1]$, with regard to necessity and possibility.}
+\label{possibility-necessity}
+\end{figure}
+
+As discussed in the introduction, this modal notion of partial knowledge or belief is not only epistemic or doxastic but also deontic and so on, i.e., has several semantic interpretations, depending on the concept feature. Our strong hypothesis here is that all modalities can be encoded using the proposed numerical grounding. 
+
+We can thus represent a quantity with a partial degree of belief $\tau \in [-1, 1]$ and use the notation:
+\eqline{\hat{\mathbf{x}} \defq \tau \, \mathbf{x}}
+where $\mathbf{x}$ corresponds to the numerical grounding of a symbol, and $\hat{\mathbf{x}}$ to the numerical grounding of a symbol weighted by a modality quantification $\tau$.
+
+Interestingly enough this representation is coherent with the semantic similarity in the following sense: Are two vectors similar? Considering $\mathbf{x} \cdot \mathbf{y}$, if it is close to $1$, then it is considered true and both modal representation and semantic similarity are coherent. If it is almost equal to $0$ then the modal representation is {\em unknown}, and in order to be coherent with semantic similarity, we must consider being in an open world, in which all that is not true is not necessarily false. A step further, if it is negative down to $-1$, modal representation considers that it is false, which is coherent with semantic similarity, though negative values are not explicitly used, up to the best of our knowledge of the literature quoted in this paper.
+
+Given these atomic ingredients, let us now study how they can be used in different cognitive data structures.
+
+\section{Knowledge structure encoding}
+
+Let us now review how cognitive symbolic data structure can be specified, in a biologically plausible way, thanks to the proposed framework. This section revisits the literature, emphasizing the data structure properties, and proposes some enhancements. Our contribution is to revisit existing mechanisms discussing in more detail their computational properties and limitations, and linking them with usual programming language data structures.
+
+\subsection{Unordered set}
+
+We first consider an unordered set ${\cal S}$ of $N$ symbols grounded to values $\{\mathbf{s}_1, \cdots \mathbf{s}_i \cdots \mathbf{s}_N\}$ and would like to be able to store them, in such a way that we can check if the symbol is in the set. Very simply, we ground ${\cal S}$ to the vector $\mathbf{s}$ :
+\eqline{\mathbf{s} \defq \sum_i \mathbf{s}_i}
+provides a solution, because given a symbol $\mathbf{s}_\bullet$ we obviously observe that $\mathbf{s}_\bullet \cdot \mathbf{s} \simeq 1$ if it corresponds to one $\mathbf{s}_i$ and almost $0$ otherwise, because random vectors are almost orthogonal as previously explained. This is called bundling \cite{schlegel_comparison_2020} or superposition.
+
+Furthermore, the representation intrinsically includes a notion of transitivity: If a set includes another subset, by construction, it includes the subset elements, more precisely:
+\eqline{\mathbf{s} \defq \sum_i \mathbf{s}_i \mbox{ and } \mathbf{s}_i \defq \sum_j \mathbf{s}_{ij} \Rightarrow \mathbf{s} \defq \sum_{ij} \mathbf{s}_{ij}}
+thus $\mathbf{s}_{ij} \cdot \mathbf{s} > 0$ for all subsets elements.
+
+This obviously generalizes to weighted symbols $\hat{\mathbf{s}}_i$, i.e., with modality weighting. In that case $\mathbf{s}_\bullet \cdot \mathbf{s} \simeq \tau$ allows retrieving the belief weight. This is equivalent to inputting a symbol $\mathbf{s}_\bullet$ which is approximately similar to a given symbol $\mathbf{s}_i$, thus indicating an approximate similarity, but neither allowing to retrieve the exact value of $\mathbf{s}_i$, nor indicating if a positive value below $1$ corresponds to a weighted symbol exactly retrieved or to a symbol approximation.
+
+This has an interesting biological interpretation: ${\cal S}$ has common features with a Hopfield network or other related attractor networks, where information has been stored in a distributed way while activating the map with an input allows retrieving if the symbol is stored, or not. The main difference is that attractor networks converge to the exact stored value, providing a mechanism of associative memory, which is now developed while introducing superposition first allowing us to better understand the need for a more sophisticated mechanism.
+
+Let us provide an analogy with programming data structures, explicitizing similarities and differences between what is proposed here and what is available in common programming languages.\footnote{We will do the same for other cognitive structures because we think that it is illustrative of the computing capability of the cognitive object.} This unordered set representation corresponds to a ``set'' container (e.g. a {\tt std::unordered\_set} in C++ or a {\tt set()} in Python), however with only an insertion method and a membership test function, without the capability to intrinsically enumerate the elements as formerly discussed.
+
+\subsubsection{Symbol enumeration}
+
+At this stage, this structure does not allow to directly enumerate all symbols $\mathbf{s}_i$, because from $\mathbf{s}$ it is not possible to decode the superposed vectors. In \cite{crawford_biologically_2016}, for instance, where data structures are defined using superposition, the intrinsic memory enumeration of the stored information is not addressed. We thus need an external mechanism to select all elements and perform an operation on each one. However, at the implementation level, in Nengo \cite{eliasmith_how_2013}, an explicit list of the defined vocabulary $\{\cdots \mathbf{s}_i \cdots\}$ is maintained, and the way to select the elements is to test $(\mathbf{s}^T \, \mathbf{s}_i)$ for each element of the vocabulary. Such select operator complexity is of $O(K)$ where $K$ is the size of the vocabulary. In the sequel, we will also propose a biologically plausible indexing mechanism, in order for instance to manipulate sequences.
+
+\subsection{Associative map}
+
+We now consider an unordered associative memory\footnote{This is not the only way to implement such an associative memory: In \cite{voelker_learning_2014}, binding/unbinding is not explicitly used, but an input/output architecture with suitable connections. Each input unit has an encoding vector in which input weights are tuned to fire for a specific key and drive a connected output vector that is optimized to estimate the value associated with the related key.}, or ``map'', of $N$ correspondences $\{\mathbf{s}_1 \rightarrow \mathbf{o}_1, \cdots \mathbf{s}_i \rightarrow \mathbf{o}_i \cdots \mathbf{s}_N \rightarrow \mathbf{o}_N\}$ between subjects and objects. To this end, we use binding operation $B_{\mathbf{s}_i}$ with a pseudo inverse, i.e. an unbinding operator, $B_{\mathbf{s}_i^\sim}$:
+\eqline{\mathbf{m} \defq \sum_i B_{\mathbf{s}_i} \, \mathbf{o}_i}
+so that:
+\eqline{B_{\mathbf{s}_\bullet^\sim} \, \mathbf{m} \simeq \sum_{i, \mathbf{s}_\bullet = \mathbf{s}_i} \mathbf{o}_i.}
+In words, the unbinding operation allows retrieving the set, i.e., the additive superposition of all objects $\mathbf{o}_i$ associated to a given subject $\mathbf{s}_\bullet$, while $B_{\mathbf{s}_k^\sim} \, {\cal S} \simeq 0$ if none.
+In appendix~\ref{VTB-algebra}, we calculate the level of noise of an unbinding operation which does not correspond to $\mathbf{s}_\bullet$ and finally obtain that the level of noise is relatively high, i.e.\footnote{We establish in appendix~\ref{VTB-algebra}, that in the general case, for $k \neq i$ $B_{\mathbf{s}_k^\sim} \, B_{\mathbf{s}_i} \, \mathbf{o}_i = {\mathcal N}\left(0, O\left(\frac{1}{d^{\frac{1}{4}}}\right)\right)$, and this occurs for all elements such that $\mathbf{s}_\bullet \neq \mathbf{s}_i$, yielding this result up to the first order.}:
+\eqline{\simeq {\mathcal N}\left(0, O\left(\frac{\#\{i, \mathbf{s}_\bullet \neq \mathbf{s}_i \}}{d^{\frac{1}{4}}}\right)\right),}
+which explains the relatively limited numerical performances of simulation with $d< 10^3$ as reported for instance in \cite{schlegel_comparison_2020}, whereas in biological neuronal networks where the dimension is an order of magnitude higher, this is no more a limitation.
+
+This allows us to both detect if the information is in the table and retrieve this information in one step if it is the case. However, as in the previous case, no mechanism allows the enumeration of the map subjects or objects.
+
+This algebraic construction also allows retrieving of the subjects associated with a given object, because of commutator $\mathbf{B_{\leftrightarrow}}$ such that:
+\eqline{\mathbf{B_{\leftrightarrow}} \, \mathbf{B}_{\mathbf{o}_i} \, \mathbf{s}_i = \mathbf{B}_{\mathbf{s}_i} \, \mathbf{o}_i,}
+yielding:
+\eqline{\mathbf{m_{\leftrightarrow}} \defq \mathbf{B_{\leftrightarrow}} \, \mathbf{m} = \sum_i B_{\mathbf{o}_i} \, \mathbf{s}_i,}
+which is now the numerical grounding of the reciprocal map $\{\mathbf{o}_1 \rightarrow \mathbf{s}_1, \cdots \mathbf{o}_i \rightarrow \mathbf{s}_i \cdots \mathbf{o}_N \rightarrow \mathbf{s}_N\}$.
+
+The algebraic construction also offers the notion of identity vector $\mathbf{i}$ with $\mathbf{B_{\mathbf{i}}} = \mathbf{I}$ so that:
+\eqline{\mathbf{s}_i = \mathbf{i} \rightarrow B_{\mathbf{s}_i} \, \mathbf{o}_i = \mathbf{o}_i}
+in other words, the binding reduces to a superposition. Theoretical details underlying the implementation of such associative memories are available in \cite{stewart_biologically_2011}.
+
+As for the previous structure, this obviously generalizes to weighted symbols $\hat{\mathbf{s}}_i$, and approximate input
+$\mathbf{s}_\bullet \simeq \hat{\mathbf{s}}_i$, allowing to retrieve the object $\mathbf{o}_i$ weighted by either the modality weighting or the input approximation, indistinctly.
+
+There are several solutions to define such binding, unbinding, and commutator operators. A proposed solution is developed in Appendix~\ref{VTB-algebra} after \cite{gosmann_vector-derived_2019} completed by \cite{mercier_ontology_2021}. This design choice is guided by the fact that we need to avoid spurious inferences: with a commutative operator (such as the convolution operator) $\mathbf{B}_{\mathbf{o}_i} \, \mathbf{s}_i$ would equal $\mathbf{B}_{\mathbf{s}_i} \, \mathbf{o}_i$ which could generate non-sense deductions (e.g., in a driver-vehicle map, it would mean that if Ming-Yue drives a bicycle, then the bicycle drives Ming-Yue unless some additional mechanism is considered to avoid such nonsense). The proposed Vector-Derived Transformation Binding (VTB) algebra avoids such caveats(see \cite{schlegel_comparison_2020} for a recent comparison of different VSAs)\footnote{An alternative to VTB is called the MBAT algebra, requiring matrix inversion instead of transposition, thus less efficient}. 
+
+This associative memory mechanism has an interesting biological interpretation: ${\cal M}$ corresponds to an associative memory in the biological sense with association storing in a distributed way and activating the associative memory with an input $\mathbf{s}_\bullet$ allows to retrieve the associated symbol. This is what happens in several biological mechanisms, as reviewed for instance in \cite{eichenbaum_memory_2017}. 
+
+In particular a structure of the form:
+\eqline{\mathbf{m} \defq \sum_n B_{\mathbf{s}_i} \, \mathbf{s}_i}
+mapping an object onto itself allows retrieval of an exact symbol from an approximate input, solving the caveats induced by using only a superposition mechanism, presented previously. This is exactly what is expected in an associative encoder (e.g., a Hopfield network) if a symbol is close to an existing symbol the associative memory will output a weighted version of the symbol.
+
+At the computer programming level, this corresponds to a ``map'' container (e.g. a {\tt Map} in JavaScript or a {\tt dictionary()} in Python), again with only insertion and retrieval methods, without intrinsic iterators.
+
+A step further, we can propose a complementary functionality, defining an additional symbol ``something'', whose numerical grounding is fixed to any new random vector $\mathbf{\sigma}$, never use elsewhere. This allows us to enhance the information to be obtained, as follows: Each time an $\mathbf{s}_i \rightarrow \mathbf{o}_i$ information is added we also add $\mathbf{s}_i \rightarrow \mathbf{\sigma}$  and $\mathbf{\sigma} \rightarrow \mathbf{o}_i$, i.e., make explicit the fact that $\mathbf{s}_i$ and $\mathbf{o}_i$ are defined in this table, which can be retrieved in one step, without requiring to enumerate the different elements. In such a case:
+\eqline{\mathbf{m}_{\mathbf{s}_j} \defq \sum_{i, \mathbf{s}_j = \mathbf{s}_i} \mathbf{o}_i = P_{\mathbf{\sigma}^\perp} \,  B_{\mathbf{s}_i^\sim} \, \mathbf{m}}
+writing $P_{\mathbf{\sigma}^\perp} \defq \mathbf{I} - \mathbf{\sigma} \, \mathbf{\sigma}^T$ the projection onto the orthogonal of $\mathbf{\sigma}$, i.e., we must eliminate the symbol ``something'' from the expected values.
+
+\subsection{Indexed and chained list}
+
+\subsubsection{Indexes construction}
+
+In order to define an indexed list, we need indexes, i.e., a mechanism that generates ordinal values. Our main purpose here is to make explicit that what has been developed using convolution operators \cite{komer_neural_2019} still holds with VTB. We fix the symbol grounding of the ``zero'' symbol $\mathbf{\nu}_0$, never used elsewhere, and define recursively:
+\eqline{\mathbf{\nu}_{n + 1} \defq B_{\mathbf{\nu}_0} \, \mathbf{\nu}_n}
+i.e. the $(n+1)$-th ordinal value is obtained by binding the $n$-th and we easily obtain, from a few algebra:
+\eqline{B_{\mathbf{\nu}_p} \, \mathbf{\nu}_q = B_{\mathbf{\nu}_q} \, \mathbf{\nu}_p = B_{\mathbf{\nu}_{p+q}}, \;\;\; 
+B_{\mathbf{\nu}_p} \, \mathbf{\nu}_q^\sim = B_{\mathbf{\nu}_q^\sim} \, \mathbf{\nu}_p  \simeq B_{\mathbf{\nu}_{p-q}},}
+in particular $\mathbf{\nu}_{n - 1} \simeq B_{\mathbf{\nu}_0^\sim} \, \mathbf{\nu}_n$ so that the definition
+holds for $n \in {\cal Z}$.
+
+Here, we only consider the minimal material to build an indexed list, while numerical information in the brain is a much more complex subject \cite{nieder_representation_2007} beyond the scope of this work.
+
+\subsubsection{Indexed list} 
+We can now define an indexed list or array, often called a vector, since the previous mechanism allows us to generate a ``counter'' that could be incremented or decremented using the binding or unbinding operator.
+
+To this end, an associative map indexed by these ordinals can be managed as a list, which values can be enumerated. Such representation is also present at several cognitive levels when considering temporal sequences, actions, or any enumeration. This is also the tool that allows us to enumerate all elements of a symbol set ${\cal S}$ previously defined, or the subjects of an associative map.
+
+To make this mechanism explicit, let us consider a list $\mathbf{l} \defq \sum_i B_{\mathbf{\nu}_i} \, \mathbf{l}_i$, and a variable index $\mathbf{k}$: A construct of the form:
+\begin{algorithmic}
+  \For{$\mathbf{k} \leftarrow \mathbf{\nu}_0 $;
+    {\bf while} $\|B_{\mathbf{k}} \, \mathbf{l}\| > 0$;
+    {\bf next} $\mathbf{k} \leftarrow B_{\mathbf{\nu}_0} \, \mathbf{k}$}
+   \State $\mathbf{l}_i \leftarrow B_{\mathbf{k}^\sim} \, \mathbf{l}$
+\State ../..
+\EndFor
+\end{algorithmic}
+allows to enumerate\footnote{In fact, considering $\mathbf{l} \defq \sum_i B_{\mathbf{\nu}_i} \, \mathbf{l}_i + B_{\mathbf{\nu}_{-1}} \, \lambda$ where $\lambda$ is the list length, updated when adding or deleting an element would improve the algorithmic ersatz implementation, which is not the issue here.} all elements, this being indeed only an algorithmic ersatz to illustrate the mechanism beyond the biologically plausible implementation of sequential memory organization.
+
+At the biological plausibility level, following \cite{eichenbaum_memory_2017}, we may consider that brain memory can have three kinds of: associative, sequential, or hierarchical (named schematic by the author), all three being present and required for cognitive processes. The VSA approach provides both associative and sequential memory. Let us consider the third one, which has not, to the best of our knowledge, been addressed with regard to VSA.
+
+At the computer programming level, this corresponds to an extensible ``array'' (e.g. a {\tt std::vector} in C++ or {\tt java.util.AbstractList} in Java), with basic edition and retrieval methods available.
+
+\subsubsection{Chained list}
+
+We can also define a chained list using an associative memory of the form:
+  \eqline{\begin{array}{rcl}
+      \mbox{\tt first} &\rightarrow& \mbox{\tt second} \\
+      \mbox{\tt second} &\rightarrow& \mbox{\tt third} \\
+      \cdots & \\
+      \mbox{\tt last} &\rightarrow& \mbox{\tt END + first}
+    \end{array}}
+where every value of the list acts as a key to the value of its successor in the list, thus enumerating the values. {\tt END} is a predefined specific symbol allowing to know when the list ends, that we can superpose to a pointer to the first value in case we need to iterate through the entire list again.
+
+We could also have considered multiple binding\footnote{In such a case a list of the form $l = [v_1, v_2, \cdots]$ is encoded without associative memory as: \eqline{\mathbf{l} = B_{\mbox{\tt value}} \, \mathbf{v}_1 + B_{\mbox{\tt next}} \, \left(B_{\mbox{\tt value}} \, \mathbf{v}_2 + B_{\mbox{\tt next}}\left(\cdots + B_{\mbox{\tt next}}\left(\mbox{\tt list-end}\right)\right)\right),}
+allowing to obtain by unbinding, the list head value, and its tail, and detect its end. This corresponds for instance to the {\tt rdf:first}, {\tt rdf:rest}, {\tt rdf:nil} symbols of the RDF representation. However, as discussed in Appendix~\ref{VTB-algebra}, chaining unbinding operations is not numerically very robust due to the additional residual noise.} as proposed in \cite{mercier_ontology_2021}.
+ 
+\subsection{Hierarchical schematic organization of information} \label{hierarchical}
+
+To make things more concrete, we aim at manipulating the symbolic representation of knowledge of the form of Fig.~\ref{concept-grounding}.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\textwidth]{figures/concept-grounding.png}}
+\caption{In our context, we represent concepts as a hierarchical data structure. Concepts are anchored in input/output, i.e., stimulus/response, say, sensorimotor feature spaces (colored regions) corresponding, for example, to different sensor modalities. Inherited features (e.g., the penguin “is-a” bird and thus inherits the features of a bird) are in dotted lines, while red lines represent overwritten values (e.g., a penguin can also swim but cannot fly). Green arrows point toward concepts that are themselves attributes of other concept features, accounting for inter-concept relationships.
+\\ Values are completed by meta-information, not explicitly manipulated by the agent, but used for the process specification or interpretation (e.g., the weight unit and bounds).}
+\label{concept-grounding}
+\end{figure}
+
+In other words, we follow \cite{gardenfors_conceptual_2004}, with the simple idea that an individual resource can be defined by ``feature dimensions'', i.e., attributes with some typed value. For instance, a bird could be\footnote{The used syntax is a weak form of the \href{https://www.json.org}{JSON} syntax: \hhref{https://line.gitlabpages.inria.fr/aide-group/wjson}.}:
+
+\begin{lstlisting}[basicstyle=\small]
+bird: {
+  is_a: vertebrate
+  can: { sing fly eat: { worm fish } }
+  has: { feather beak }
+  is: { weight : { min: 0.010 max: 50 unit: kilogram } }
+}\end{lstlisting}
+with some exception like penguin
+\begin{lstlisting}[basicstyle=\small]
+penguin: {
+  is_a: bird
+  can: { fly: false walk }
+}
+\end{lstlisting}
+
+and equivalently this could be decomposed\footnote{Conceptually, considering a distributed version of this hierarchical specification by enumerating each node and directed edges is rather obvious, at the concrete implementation level, some details have to be carefully taken into account and the so-called \href{https://line.gitlabpages.inria.fr/aide-group/wjson/turtoise.pdf}{turtoise} specification takes care of proposing a well-defined one to one correspondence (with an open source implementation), this being not necessary to detail here.} in terms of triples such as {\tt bird is\_a vertebrate} and so on.
+
+Here we choose the \cite{mcclelland_parallel_2003} general approach of semantic knowledge representation as hierarchical taxonomy ({\tt is-a}), capability ({\tt can}) including in relation with other resources, extrinsic feature ({\tt has}) and intrinsic feature ({\tt is}).
+This illustrative example is sufficient to allow us to detail the main characteristics of our representation.
+Some features are properties, others are relations. A property can be qualitative, e.g., the {\tt is-covered-by} takes value in an enumeration (e.g., \{{\tt sing}, {\tt fly}\}) or quantitative (e.g. the {\tt weight}). The features can be hierarchical, either because the value is an enumeration (e.g., {\tt can}) or because the value has some features (e.g., {\tt weight}).
+
+Such a data structure defines a `concept'' in the sense of \cite{gardenfors_conceptual_2004} (e.g., ``a bird'') which is both a convex region of the state space (e.g., the region of all birds) and a prototype: Each feature has a default value, this also defines a prototype (e.g., a typical, i.e., prototypical, bird). It corresponds to the third cognitive memory architecture as proposed by \cite{eichenbaum_memory_2017} and we are now going to discuss how to implement it in a VSA framework.
+
+\subsection{Relational maps} \label{relational-map}
+
+To proceed, we thus have to consider a set of items of knowledge of the form of Fig.~\ref{triple}, bounded to a triple of vectors $\{(\mathbf{s}_1 ,  \mathbf{p}_1 ,  \mathbf{o}_1.), \cdots (\mathbf{s}_N ,  \mathbf{p}_N ,  \mathbf{o}_N.)\}$. This corresponds to relations, which are the basis of semantic information. Let us discuss how to store this information in a biological ``triple store'' using superposition, and a few binding operations. The most natural choice might be to consider triple set $\mathcal{T}$ grounded to a vector $\mathbf{t}$ :
+\eqline{\mathbf{t}_{\mathbf{pso}} \defq \sum_i \mathbf{B}_{\mathbf{p}_i} \, \mathbf{B}_{\mathbf{s}_i} \, \mathbf{o}_i.}
+
+This corresponds to a nested map: Each property $\mathbf{p}_j$ is defined through a mapping between subjects and objects, verifying such property:
+\eqline{\mathbf{t}_{\mathbf{p}_j} \defq \sum_{i, \mathbf{p}_j = \mathbf{p}_i} \mathbf{B}_{\mathbf{s}_i} \, \mathbf{o}_i}
+with the property\footnote{
+Obviously:
+\eqline{B_{\mathbf{p}_j^\sim} \, \mathbf{s} =
+  \sum_{i, \mathbf{p}_j \neq \mathbf{p}_i} B_{\mathbf{p}_j^\sim} \, \mathbf{t}_{\mathbf{p}_i} +
+  \sum_{i, \mathbf{p}_j = \mathbf{p}_i}  B_{\mathbf{p}_j^\sim} \, \mathbf{B}_{\mathbf{p}_i} \, \mathbf{B}_{\mathbf{s}_i} \, \mathbf{o}_i \simeq \mathbf{t}_{\mathbf{p}_j}}
+The first term vanishing because $\mathbf{t}_{\mathbf{p}_i}, \mathbf{p}_j \neq \mathbf{p}_i$ is generically orthogonal to $\mathbf{p}_j^\sim$, while the second reduces to $\mathbf{t}_{\mathbf{p}_j}$ thanks to the approximate inverse property.} that: $B_{\mathbf{p}_j^\sim} \, \mathbf{s} = \mathbf{t}_{\mathbf{p}_j}$.
+
+Given a triple $(\mathbf{s}_0 ,  \mathbf{p}_0 ,  \mathbf{o}_0.)$ it is obvious to verify to what extent it is stored in the relational map by unbinding:
+\eqline{(B_{\mathbf{s}_o^\sim} \, B_{\mathbf{p}_o\sim} \, \mathbf{s} \cdot \mathbf{o}_0)}
+and this obviously generalizes to triple multiplied by a modal $\tau$ value.
+
+We can also further obtain all objects of a given subject for a given property:
+\eqline{\mathbf{t}_{\mathbf{p}_j, \mathbf{s}_j} \defq \sum_{\mathbf{p}_j = \mathbf{p}_i, \mathbf{s}_j = \mathbf{s}_i} \mathbf{o}_i \simeq B_{\mathbf{s}_j^\sim \oslash \mathbf{p}_j^\sim} \, \mathbf{t}_{\mathbf{pso}} }
+using the notation of Appendix~\ref{VTB-algebra}, we can also easily define:
+\eqline{\mathbf{t}_{\mathbf{p}_j, \mathbf{o}_j}  \defq \sum_{\mathbf{p}_j
+  = \mathbf{p}_i, \mathbf{o}_j = \mathbf{o}_i} \mathbf{s}_i
+  \simeq B_{\mathbf{s}_j^\sim} \, \mathbf{B_{\leftrightarrow}} \, B_{\mathbf{p}_j^\sim} \, \mathbf{t}_{\mathbf{pso}}.}
+
+A dual construction, $\mathbf{t}_{\mathbf{spo}} \defq \sum_i \mathbf{B}_{\mathbf{s}_i} \, \mathbf{B}_{\mathbf{p}_i} \, \mathbf{o}_i$, with similar decoding formulae, allows to further access the properties of a given subject $\mathbf{t}_{\mathbf{s}_j} \defq \sum_{i, \mathbf{s}_j = \mathbf{s}_i} \mathbf{B}_{\mathbf{p}_i} \, \mathbf{o}_i$, or the properties of a given subject object couple $\mathbf{t}_{\mathbf{s}_j, \mathbf{o}_j} \defq \sum_{i, \mathbf{s}_j = \mathbf{s}_i, \mathbf{o}_j = \mathbf{o}_i} \mathbf{p}_i$, using similar formulae. A key point is that, up to our best knowledge, there is no operation to recover $\mathbf{t}_{\mathbf{s}_j}$ or $\mathbf{t}_{\mathbf{s}_j, \mathbf{o}_j}$ from $\mathbf{t}_{\mathbf{pso}}$, and no operation to recover $\mathbf{t}_{\mathbf{p}_j}$ or $\mathbf{t}_{\mathbf{p}_j, \mathbf{o}_j}$ from $\mathbf{t}_{\mathbf{spo}}$. This is an important constraint, and it would be interesting to verify if such a constraint is observed at the level of the brain's semantic memory.
+
+Moreover, in order to enumerate the different elements of these maps $\mathbf{t}_{\bullet}$ we need the corresponding indexing mechanisms discussed before. If the basic operation is to enumerate all triples, with order constraints, then the choice of the store architecture is not crucial, this is going to be the case in the sequel.
+
+A step further, we can also consider an additional symbol ``something'' and each time a triplet $(\mathbf{s}_i,  \mathbf{p}_i,  \mathbf{o}_i.)$ is added, also adding $(\mathbf{\sigma},  \mathbf{p}_I,  \mathbf{o}_i.)$, $(\mathbf{s}_i ,  \mathbf{\sigma} ,  \mathbf{o}_i.)$, $(\mathbf{s}_i,  \mathbf{p}_I,  \mathbf{\sigma}.)$. This allows retrieving the fact that there is a link between predicate and object, subject and object, and subject and predicate, without requiring enumerating the different elements, as previously discussed.
+
+At the cognitive level, this corresponds to cognitive maps in interaction and is a proposal to formalize the notion of hierarchical memory organization, as discussed by, e.g., \cite{eichenbaum_memory_2017}.
+
+At the computer programming level, this corresponds to a ``triple store'' used in ontology reasoners and is in fact a distributed representation of an oriented graph, in the form of adjacency set for the $\mathbf{t}_{\mathbf{spo}}$ construction and hierarchical edge set for the $\mathbf{t}_{\mathbf{pso}}$ construction.
+
+At this stage, we have reviewed and completed the Vector Symbolic Architecture (VSA) elements needed for the next step, in particular the notion of a relational map, which is a combination of associative maps, enumerated by indexed list and builds on bundling structure reviewed at the beginning of the section. We are now going to explain how symbolic computation can be performed, making interacting such memory structures.
+
+\section{Knowledge transformation encoding} \label{transformation}
+
+Let us now consider how to define operators allowing to enrich the memorized information, using biologically plausible transformations.
+
+\subsection{Considering symbolic operations}
+
+We are going to consider symbolic operations as entailment rules of deductive, inductive, or abductive inference. It is worthwhile to note that both induction, as for instance in \cite{domingos_unifying_1996} and abduction could be formalized by inference rules (see, e.g, \cite{lakkaraju_rule_2000} for a computational example and \cite{shanahan_abductive_2000} for a contribution regarding temporal reasoning). Our positioning is that reasoning in the brain is mainly related to the construction of mental models, as discussed in, e.g., \cite{khemlani_causal_2014} considering common-sense reasoning. Such framework better corresponds to human reasoning than pure logic reasoning, including modal logic reasoning \cite{ragni_reasoning_2018}. In any case, a mechanism to construct, enrich and modify such a mental model must be described.
+
+Here we focus on rule-based reasoning. Regarding ontology such as OWL, the RDFS layer is purely rule-based, and several property inferences such as inverse, symmetry, transitivity, and rules of equating objects are rule-based. this corresponds to the so-called OWL2 RL profile. It allows scalable reasoning without sacrificing too much expressive power and can be implemented using rule-based reasoning mechanisms\footnote{See for instance \hhref{https://www.w3.org/TR/owl2-profiles/\#OWL_2_RL} for details.}. Carefully considering the related entailment rules of this specification we have observed that they require either one, two, or at most three premises, which is an important aspect in our context. Beyond, other rule-based mechanisms can complete the description of rule-based reasoning, such as adding function-free Horn rules (e.g. using the SWRL\footnote{\hhref{https://en.wikipedia.org/wiki/Semantic_Web_Rule_Language}} language with suitable conditions \cite{motik_query_2005}). This is what we target here.
+
+Beyond deductive reasoning, following \cite{domingos_unifying_1996} for instance or using inductive logic programming\footnote{\hhref{https://en.wikipedia.org/wiki/Inductive_logic_programming}}, inductive reasoning is easily formulated using the rule-based mechanism provided, we can add counting operations in order to perform enumerative induction. This means that we will have rules which are going to scan the whole relational map, but we are going to observe that this is also required for other rules. This being stated, we will not further develop this aspect is only mentioned as a perspective of the present work.
+
+A step further, rule-based abduction has been formalized, following, e.g., \cite{lakkaraju_rule_2000}, as in fact a set of possible causes of a given observation, that is deduced (to make short a more sophisticated story). In this rather restricted but still powerful context, the rule-based mechanism does not ``invent'' the cause, but infers parameterized predefined causes, performing what could be called model-based abduction.
+
+To summarize, our design choice is to propose a rather generic mechanism, specific enough to enjoy a robust implementation, and allowing to specify what has been reviewed here.
+
+\subsection{A generic mechanism}
+
+In order to proceed, let us write:
+\eqline{(\mathbf{\$s}_0,  \tau_0 \, \mathbf{\$p}_0,  \mathbf{\$o}_0 .)}
+the fact that a variable subject $\mathbf{\$s}_0$ is associated to a variable object $\mathbf{\$o}_0$ in an associative table related to predicate variable $\mathbf{\$p}_0$ with a level of belief $\tau_0$, i.e., that in triple store there is:
+\eqline{\mathbf{t}_{pso} = \tau_0 \, \mathbf{B}_{\mathbf{\$p}_0} \, \mathbf{B}_{\mathbf{\$s}_0} \, \mathbf{\$o}_0 + \cdots,}
+here we use the $\$$ prefix to make explicit that it is a variable symbol.
+
+We are going to consider the entailment rules of the form:
+\eqline{\bigwedge_{i=1}^{i=I} (\mathbf{\$s}_i,  \mathbf{\$p}_i,  \mathbf{\$o}_i .) \rightarrow \bigoplus_{j=1}^{j=J} (\mathbf{\$s}_j,  \tau_j(\cdot) \, \mathbf{\$p}_j,  \mathbf{\$o}_j .)}
+where:
+\begin{itemize}
+\item The left-hand side expression corresponds to a conjunction of premises, the $\mathbf{\$x}_i$ ($\mathbf{\$x}$ stands for the subject, predicate, or object) receiving the corresponding item as input.
+\item The weight $\tau_j(\cdot)$ is a function of left-hand side elements, equaling $0$ if the rule does not apply to the element, negative if the consequence is to partially delete an element, and positive otherwise.
+\item Each right-hand value $\mathbf{\$x}_j$ ($\mathbf{\$x}$ stands for the subject, predicate or object) is either a constant or equals a left-hand side element $\mathbf{\$x}_i$, or could be a more complex expression of left-hand side elements.
+\item The right-hand side expression corresponds to $\mathbf{t}_{pso} \mathrel{+}= \sum_j \tau_j(\cdot) \, \mathbf{B}_{\mathbf{\$p}_j} \, \mathbf{B}_{\mathbf{\$s}_j} \, \mathbf{\$o}_0$, i.e., to update the related structure. In almost all cases we have considered, only one triple is generated, this part of the setup is thus stated for future use.
+\end{itemize}
+
+This includes modifying, including deleting, existing triplets since they are weighted by a $\tau$ value that can be modified, and thus set to $0$. The key point is that the calculation of $\tau_j(\cdot)$ allows the integration not only of modal logical formulae but also threshold mechanisms or counting operations that are required for induction.
+
+Such a general setting clearly corresponds to usual production rules. In the binary mode, e.g., if $\tau \in \{0, 1\}$ this is nothing but a specification equivalent to Horn clauses. Introducing the calculation of $\tau_j(\cdot)$ allows us to go beyond, but at the price of decidability and implementation tractability, as detailed in the sequel, so we will need to consider suitable convergence conditions.
+
+At the implementation level, the application of such rules can simply be implemented by feedback connections between an iterator over the triples of the relational map, as discussed in detail for a typical example, before describing a general implementation.
+
+\subsection{Class inheritance entailment rule} \label{inheritance}
+
+In order to better understand what is proposed here, let us start by detailing an illustrative and quite universal example.
+
+\subsubsection{Class inheritance as a major deductive mechanism}
+
+The most common entailment rule is likely the class inheritance rule, which states that ``if a subject belongs to a class, and if this class is a subset of a superclass, then the subject belongs to the superclass'', e.g., ``if Tom is a cat, and cats are animals, then Tom is an animal''. This is a deductive rule, a particular syllogism, which belongs to common sense reasoning and is well understood as soon as formal reasoning emerges in children \cite{smith_development_1994}.
+
+The notion of ``class'' corresponds to Boolean properties (e.g., if you are alive, you belong to the class of living organisms), and capabilities (e.g., if you can fly, you belong to the class of flying organisms). It is associated with a given individual feature. In addition, such Boolean features are organized in a hierarchy, leading to a taxonomy, that describes the information about the considered individuals.
+
+At the syntax level, it is based on two predicates, say $\texttt{\bf is\_a}$, to state that an individual belongs to a class and, say $\texttt{\bf are}$, to state that all individuals of class are also individual of more general class. This corresponds respectively to $\texttt{\bf rdf:type}$ and $\texttt{\bf rdfs:subClassOf}$, when using the RDFS vocabulary, as discussed in Appendix~\ref{RDFS-entailment-rules}.
+
+Implementing the class inheritance rule using VSA has already been successfully developed and numerically experimented by \cite{mercier_ontology_2021} using the Nengo simulator \cite{bekolay_nengo_2014}, while we propose here to rely on this work to propose a more general mechanism. In Appendix~\ref{RDFS-entailment-rules}, we make explicit the fact that a commonly used Semantic Web modeling language, the RDFS (Resource Description Framework Schema) can have its main mechanisms implemented in such a numerical framework.
+
+\subsubsection{Design of the inference rule}
+
+The class inheritance rule writes in its ``binary equality'' form:
+\eqline{(\mathbf{\$s} ,  \texttt{\bf is\_a} ,  \mathbf{\$c}_1 .) \wedge (\mathbf{\$c}_1 ,  \texttt{\bf are} ,  \mathbf{\$c}_2 .) \Rightarrow (\mathbf{\$s} ,  \texttt{\bf is\_a} ,  \mathbf{\$c}_2 .)}
+that states that if any subject $\$s$ belongs to the class $\mathbf{\$c}_1$, i.e., is of ``type'' $\mathbf{\$c}_1$, and this class $\mathbf{\$c}_1$ is a subclass of $\mathbf{\$c}_2$, then $\mathbf{\$s}$ also belongs to the class $\mathbf{\$c}_2$. Here the equality is verified or not, we are in the exact reasoning case.
+
+When considering an approximate form, as schematized in Fig.~\ref{rdfs9-derivation}, the rule writes:
+\eqline{(\mathbf{\$s}_1 ,  \mathbf{\$p}_1 ,  \mathbf{\$o}_1 .) \wedge (\mathbf{\$s}_2 ,  \mathbf{\$p}_2 ,  \mathbf{\$o}_2 .) \Rightarrow (\mathbf{\$s}_1, \tau \, \texttt{\bf is\_a}, \mathbf{\$o}_2 .)}
+with:
+\eqline{\tau \defq (\mathbf{\$p}_1 \cdot \texttt{\bf is\_a}) \And (\mathbf{\$o}_1 \cdot \mathbf{\$s}_2) \And (\mathbf{\$p}_2 \cdot \texttt{\bf are}),}
+so that $\tau$ equals $0$ unless the three equalities are at least partially verified. If equals to $0$ nothing is inferred, whereas if higher than $0$, a new triple is output. It is a forward schema in the sense that given some input data, a new result is inferred. This second form allows approximate correspondences, e.g., $\mathbf{\$p}_1$ to be approximately $\texttt{\bf is\_a}$.
+
+\begin{figure}[ht]
+\centerline{\includegraphics[width=0.75\textwidth]{figures/rdfs9-derivation.png}}
+\caption{The forward implementation of the class inheritance entailment rule.}
+\label{rdfs9-derivation}
+\end{figure}
+
+It requires two numerical operators:
+\\- The similarity operator $(\mathbf{x} \cdot \mathbf{y})$ and
+\\ - a numerical implementation of the conjunction $(\mathbf{x} \And \cdots \And \mathbf{y})$ operator, equals to:
+\\ \tab \tab - $0$ as soon one operand is equal or less than $0$,
+\\ \tab \tab - $1$ if all operand equal $1$,
+\\ with intermediate values if operands are between $0$ and $1$.
+This could be a $\min$ operator in coherence with numeric modal logic implementation, as discussed in \cite{vieville_representation_2022}, and is our proposal here, which is easily implementable\footnote{To be very precise the $\max$ operator biological implementation is often discussed, which obviously equivalent to a $\max$ up to linear transform:
+\eqline{\min(x_1, \cdots x_n) = 1 - \max(1 - x_1, \cdots 1 - x_n), \mbox{ with } x_i \in [0, 1].}} at a neuronal level \cite{bugmann_biologically_1997}, while any other T-norm\footnote{\url{https://en.wikipedia.org/wiki/T-norm}.} would be suitable.
+
+\subsubsection{Forward versus backward inference}
+
+This previous setup corresponds to a forward application of the rule, i.e., given two left-hand side triples, how to numerically calculate the right-hand side.
+
+In its backward form, given the right-hand side, we calculate:
+\eqline{\begin{array}{rcl}\tau &\defq&  (\mathbf{\$s}_0 \cdot \mathbf{\$s}_1) \And (\mathbf{\$o}_0 \cdot \mathbf{\$o}_2) \And (\mathbf{\$p}_0 \cdot \texttt{\bf is\_a}) \\&& \And (\mathbf{\$p}_1 \cdot \texttt{\bf is\_a}) \And (\mathbf{\$o}_1 \cdot \mathbf{\$s}_2) \And (\mathbf{\$p}_2 \cdot \texttt{\bf are}),\end{array}}
+i.e., given a right-hand side input, evaluate to what extent two left-hand side triples could correspond to what is expected. See e.g., \cite{kapoor_comparative_2016} for an overview of this forward versus backward duality.
+
+In the brain, as discussed for instance in \cite{oreilly_goal-driven_2014} at a computational level and \cite{friston_learning_2003} at a more conceptual level, both forward and backward mechanisms are mixed in cognitive behaviors, as studied for instance in \cite{amidu_protocol_2019} at a more experimental level. In a nutshell, entailment rules are applied both ``on query'' when, given a goal-directed behavior, some information is required and at a more data-driven level, here stimulus-driven level. In the sequel, we are going to focus on forward inference, while in \cite{mercier_ontology_2021} a backward mechanism based on VSA, for a specific couple of inference rules, has been proposed and validated.
+
+\subsubsection{Exact versus approximate inference}
+
+This rule thus considers approximate similarity: If the input triple states that $\textbf{\$s}_1$ is of class $\textbf{\$o}_1$, only approximately, with $\textbf{\$p}_1 = \tau \, \texttt{\bf is\_a}$, with $\tau \in [0,1]$, and similar approximate equalities, while the similarity operator outputs a value between 0 and 1 and the conjunction operators interpolate values between $0$ and $1$ given the input, we will obtain as output an appropriate predicate value $\tau' \, \texttt{\bf is\_a}$, with $\tau' \in [0,1]$, which corresponds to the fact the predicate is only approximately true.
+
+It is interesting to note that in case of exact inference (i.e., $\textbf{\$p}_1 = \texttt{\bf is\_a}$, $\textbf{\$o}_1 = \textbf{\$s}2$, $\textbf{\$p}_2 = \texttt{\bf are}$), we obtain $\tau = 1$ as expected.
+
+\subsubsection{Implementation of negative inference}
+
+A step further, this however does not immediately generalize to negative inference (i.e., the fact it approximately does {\em not} belong to a given class, which is beyond RDFS specification but present at the OWL level), but still: In that case, a symmetric rule:
+\eqline{(\mathbf{\$s} ,  \neg \texttt{\bf is\_a} ,  \mathbf{\$c}_1 .) \wedge (\mathbf{\$c}_2 ,  \texttt{\bf are} ,  \mathbf{\$c}_2 .)  \Rightarrow (\mathbf{\$s} ,  \neg \texttt{\bf is\_a} ,  \mathbf{\$c}_2 .)}
+has to be considered, with totally similar development. The key point, here, is that we must only consider the positive part of the similarity, i.e., combine with a rectification operator.
+
+\subsubsection{Implementation of the inference rule}
+
+At the implementation level, what is schematized in Fig.~\ref{rdfs9-derivation}, is a simple analog calculation of a $\tau$ value given some left-hand size input, while the backward implementation is a calculation that involves also the right-hand side values: It is no more than a weighted connection between triples, i.e., between memory elements, with the generation of a new triple in the forward case and an evaluation of the queried triple in the backward case.
+
+Since we consider approximate inference, and contrary to the binary equality case\footnote{\label{closure} In the binary equality case, let us illustrate our purpose by explicitizing, how to generate the entailment rule closure, i.e., all deducible triples, given this rule and a set of input triples. An efficient mechanism must be able to select the pertinent triples, i.e., use a $\textbf{select}$ operator, e.g., thanks to associative tables, indexed by property and subject. Given two constant values $c_i$, $c_j$:
+\begin{algorithmic}
+\ForAll{$(\$s_i \; \$p_i \; \$o_i .), \$p_i = c_i \And \$s_i = c_j$}
+\State ../..
+\EndFor
+\end{algorithmic}
+can be enumerated directly without scanning all triples but only the one to be selected. This will allow us to incrementally calculates the closure as follows, given a ``closed'' set of triples $\{(\$s_i \; \$p_i \; \$o_i .) \cdots \}$ with all possible triplets generated and a new triple $(\$s_0 \; \$p_0 \; \$o_0 .)$ to be added, the standard algorithm writes (see, e.g.,\cite{kapoor_comparative_2016} for an introduction):
+\begin{algorithmic}
+\State \textbf{input} A new triple $(\$s_0 \; \$p_0 \; \$o_0 .)$ and a closed set of triples $\{(\$s_i \; \$p_i \; \$o_i .) \cdots \}$.
+\State \textbf{let} $\{(\$s_0 \; \$p_0 \; \$o_0 .)\}$ be an ``open'' triple set, initialized with the new triple inside.
+\Repeat
+\State \textbf{pull} a triple $(\$s_0 \; \$p_0 \; \$o_0 .)$ from the open triple set.
+\If{$\$p_0 = \texttt{is\_a}$}
+\ForAll{$(\$s_i \; \$p_i \; \$o_i .), \$p_i = \texttt{are} \And \$s_i = \$o_0,$ in the closed triple set}
+\State \textbf{add} $(\$s_0 \; \texttt{is\_a} \; \$o_i .)$ to the open triple set.
+\EndFor
+\ElsIf{$\$p_0 = \texttt{are}$}
+\ForAll{$(\$s_i \; \$p_i \; \$o_i .), \$p_i = \texttt{is\_a} \And \$o_i = \$s_0,$ in the closed triple set}
+\State \textbf{add} $(\$s_i \; \texttt{is\_a} \; \$o_0 .)$ to the open triple set.
+\EndFor
+\EndIf
+\State \textbf{add} the triple $(\$s_0 \; \$p_0 \; \$o_0 .)$ to the closed triple set.
+\Until{the open triple set is empty.}
+\end{algorithmic}}, we can not select triples that exactly match a given pattern. In the forward mode, we must iteratively calculate the $\tau(\cdot)$ on the whole conjunction of left-hand side triples, generating new triples when $\tau(\cdot)$ is above a given threshold, as discussed in the general case now.
+
+\subsection{Entailment rules in the general case}
+
+Back to the general case, let us now describe an iterative closure algorithm, as schematized in Fig.\ref{tau-architecture}, and discuss its properties.
+
+The key idea is that the relational map is a two-level hierarchy with:
+\\- known triples map storing all existing facts and all their derivations given a fixed set of entailment rules,
+\\- new triples buffer that is input or feedback by entailment rules and for which derivations must still be done.
+
+This is a very common setup to calculate a fixed point or a closure.
+
+For each new triple, we have to:
+\\ - check that if it is already a known triple, in that case, the job is done;
+\\ - otherwise:
+\\ \tab - for each entailment rule,
+\\ \tab \tab - for each left-hand side premise instantiated by the new triple,
+\\ \tab \tab \tab - for each known triplet set matching the other premises,
+\\ \tab \tab \tab \tab - calculate the related $\tau(\cdot)$ value and generate the corresponding new triple or triples,
+\\ - move this new triple from the new triple buffer to the known fact map.
+
+At the initialization stage, the known triple map is empty, and the new triple buffer waits for an input.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.8\textwidth]{figures/tau-architecture.png}}
+\caption{The entailment rules feedback mechanism in the general case, see text for details.}
+\label{tau-architecture}
+\end{figure}
+
+This basic mechanism raises several issues.
+
+\subsubsection{Comparing a new triple with a known existing triple}
+
+Given the relation map data structure, it is obvious by unbinding to verify if the new triple has a similarity with a know triple of the relation map, as made explicit in subsection~\ref{relational-map}. This similarity corresponds to the product of the degree of belief of each triple multiplied by the cosine similarity.
+
+Thanks to the development of a statistical test in section~\ref{encoding} and easy first-order estimation of the noise level as made explicit in Appendix~\ref{Algorithmic-ersatz} at the implementation level, we have available, given a probability threshold, a mechanism to decide if the statistical difference of degree of belief between the new and known triples is negligible or not.
+
+If it is not negligible it means that both triples are similar and:
+\\- either the new triple enforces the degree of belief of the known one, up the upper bound which is $1$ corresponding to the ``true'' value,
+\\- or it decreases, potentially down to contradicting the previous degree of belief (setting the value down to $-1$ corresponding to the ``false'' value, or setting it to $0$, corresponding to an ``unknown'' state.
+
+This is very interesting but it has a drawback: it may generate an unstable state. Let us explain: In the binary case, the only  degree of belief value is 1, thus the only possibility is that the new triple equals the known one, and we can avoid redoing the inference. At a more general level, if the only possibility is that the new triple enforces the degree of belief of the known one, we still have to redo inferences, but the system is monotonic, in the sense that value can only increase and is bounded, thus must converge. A simple way to implement a monotonic mechanism is to take into account the new triple, only if its level of belief value is higher than the previously known triple belief value.
+
+At this stage, it is really a semantic alternative, to be chosen at the application level, depending on whether we design a cumulative knowledge mechanism in a stable universe or an adaptive mechanism in a changing knowledge environment. Both are possible at this implementation level while developing this point is beyond the scope of our purpose.
+
+\subsubsection{Algorithmic complexity for a given new triple}
+
+For one-step, given $T$ inputs, $R$ entailment rules of arity (i.e., number of left-hand side premises) $I$, and $S$ known facts these nested loops generate $O(T\,R\,I\,S^{I-1})$ calculations of $\tau(\cdot)$. Fortunately, for most of the rules, we have $I=2$ or even $I=1$, except for some fragments of OWL-RL entailment rules\footnote{The situation is even more complex because some entailment rules require managing variable arity depending, for instance, on data structure length. See \cite{cao_web_2014} for a detailed discussion, what we proposed here is thus directly applicable to the RDFS language layer and opportunistically to some OWL 2 reasoning mechanism.} with often $I=3$, so that the complexity is mainly linear with respect to relational map, and seldom quadratic. Furthermore, beyond a sequential system, in our case, we have a completely distributed setup, so that such an operation set is obvious to implement in parallel at a certain stage:
+\\- Each new triple must be treated in sequence, in order to work with a stable known triples map;
+\\- However given a new triple, the rule enumeration, the left-hand-side assignation, and the known triple enumeration on other premises locations can all be performed in parallel, generating new triples in any order.
+
+\subsubsection{Global algorithmic time and space complexity size.}
+
+The global algorithmic complexity in time and space are linked, since each step generates one new triple, while these operations are easily implemented in a distributed framework.
+
+This complexity is highly dependent on each rule, for instance, it is easy to verify that a reflexivity property generates a closure whose order of magnitude is linear with respect to the input triple, a symmetry property generates a closure whose order of magnitude is quadratic with respect to the input triple, and transitivity generates a closure equivalent to the number of the path in an oriented graph, which thus can be exponential for a fully connected graph.
+
+Regarding space complexity, an important aspect is the ``catastrophic forgetting'' i.e., what happens if two many random vectors are superposed in the relation map so that approximate orthogonality cannot be guaranteed. This has been numerically studied in, e.g., \cite{schlegel_comparison_2020} showing on one hand that the VT mechanism we have chosen outperforms other representations based on the approximate inverse, and outperforms other dense methods (but not sparse one) in terms of superposition capability. The order of magnitude is rather low, with about 30 symbols reaching 99\% accuracy in a space of dimension 1000, while the best sparse methods have still limited performances of about 50 symbols, for the same dimension.
+
+As it, the proposed mechanism is really limited to toy applications, we have two tracks to improve. On one hand, when randomly drawing almost orthogonal symbols, it is always possible to use, say the modified Gram-Schmidt methods to improve the stability and obtain precise orthogonality, with the benefit to improve overall stability. On $N$ symbols the complexity is quadratic in the number of symbols, i.e., in $O(d\,N^2)$. On a sphere of dimension $d$ we obviously can draw $d$ orthogonal symbols.
+
+On the other hand, at the microscopic level, on a real spiking neuronal network, the dimension is several orders higher, a neuronal map typically corresponds to state space of dimension $10^5$ which is not an order of magnitude higher.  Extrapolating the linear approximation for the \cite{schlegel_comparison_2020} in Fig. 4 of their paper we obtain a bit more than $3000$ symbols for $d=10^5$ and a bit more than $30000$ symbols for $d=10^6$. 
+
+This is of course impossible to calculate at a mesoscopic scale manipulating symbols of such dimension, but we are going to introduce the idea to simulate the VSA mechanism at a macroscopic level, i.e., directly manipulating the algebraic symbols and predicting the cumulative noise of the result. We make explicit this alternative method in Appendix~\ref{Algorithmic-ersatz} and share a preliminary implementation of such a mechanism, which is no more limited by the vector space dimension. 
+
+\section{A preliminary experimentation}
+
+To illustrate the use of this mechanism we reconsider the example proposed in \cite{mercier_ontology_2021}, and show a minimal ontology in Fig.~\ref{Pizza}, limiting this preliminary experimentation to deductive rules, using the RDFs vocabulary. This allows us to better compare the two approaches. Here the class inheritance \textit{rdfs9} detailed in this paper, the \textit{rdfs2} subject domain inference, the \textit{rdfs3} object range inference, and the property inheritance \textit{rdfs7} entailment rules  detailed in Appendix~\ref{RDFS-entailment-rules} are implemented (refer to this appendix explaining why this choice makes sense).
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.8\textwidth]{figures/pizza-aristotle.png}}
+\caption{An example of a simple ontology with three individuals, black arrows correspond to factual statements input in the database and green arrows to inferred statements. Rectangular boxes stand for individuals, round boxes for classes, and properties label arrows. Here, from the fact that a subject eats an object, we deduce that this subject is a Person, and the object is Food. This is enlightened by a red arrow. From the fact the object is a Margherita pizza, which is a Pizza, which is a Food, from the class hierarchy, we deduce that the object is a Pizza, and re-deduce it is a Food. Furthermore, because Luigi (among other activities, since it is an open world) eats a pizza, we deduce it is a Person. Because of property heritage, here a Topping is an Ingredient, we also deduce from the fact that this pizza has mozzarella as a topping, and it also has it as an ingredient. In the macroscopic implementation, this property is deduced from the fact that Margherita pizza has, say, always mozzarella as a topping, allowing us to generate compounded inferences.}
+\label{Pizza}
+\end{figure}
+
+\subsection{Macroscopic implementation of the VSA system}\label{macrovsa}
+
+As discussed throughout this paper we are in a position to propose an algorithmic ersatz of the usual VSA mesoscopic linear algebra calculations between high dimensional random vectors, and this has been implemented and made available as a public documented open-source code\footnote{\hhref{https://line.gitlabpages.inria.fr/aide-group/macrovsa/index.html}}.
+
+The generation of a symbol, at a given level of belief $\tau$ and for a given level of first-order random normal noise standard-deviation $\sigma$, with the usual similarity, bundling and binding operation are made available, with some technical details about the noise calculation and software architecture given in Appendix~\ref{Algorithmic-ersatz}. This is tested with an associative map and relational map, as described in the previous section, and we have implemented the tiny Pizza experiment\footnote{Source code is available here: \\ \hhref{https://gitlab.inria.fr/line/aide-group/macrovsa/-/blob/master/src/pizza_experiments.cpp} \\ and it is noticeable that the C/C++ implementation of such rules is really straightforward to write, as documented in the source code. This piece of code output is available here: \\ \hhref{https://gitlab.inria.fr/line/aide-group/macrovsa/-/raw/master/src/pizza_experiments.out.txt} \\ in coherence with Fig.~\ref{result0}, showing also the intermediate inference steps.}, obtaining, in the simplest case, the expected closure, as given in Fig.~\ref{result0}.
+
+\begin{figure}[htb]
+\begin{center}\begin{tabular}{| p{0.60\linewidth} | p{0.35\linewidth} |}
+    {\em Input triples}                            & {\em Inferred triples} \\
+\hline
+  {\small\tt (Luigi eats thisPizza)}                      & {\small\tt (Luigi rdf:type Person)} \\
+  {\small\tt (thisPizza rdf:type MargheritaPizza)}        & {\small\tt (thisPizza rdf:type Pizza)} \\
+  {\small\tt (MargheritaPizza rdfs:subClassOf Pizza)}      & {\small\tt (thisPizza rdf:type Food)} \\
+  {\small\tt (Pizza rdfs:subClassOf Food)}                & {\small\tt (MargheritaPizza rdfs:subClassOf Food)} \\
+  {\small\tt (eats rdfs:domain Person)}                   &  {\small\tt (thisPizza hasIngredient thisMozzarella)}\\
+  {\small\tt (eats rdfs:range Food)}                      &\\
+  {\small\tt (thisPizza hasTopping thisMozzarella)}       &\\
+  {\small\tt (hasTopping rdfs:subPropertyOf hasIngredient)} &\\
+  \hline \end{tabular}\end{center}
+\caption{The expected inferences using the proposed RDFS subset of entailment rules as obtained by
+  the macroscopic algorithmic ersatz of VSA implementation.}
+\label{result0}
+\end{figure}
+
+More interesting in this result is what happens considering modality, e.g.,
+\\\centerline{(Luigi 0.5 eats thisPizza)}\\
+in words, it is possible but not completely necessary that Luigi eats the given pizza. In that case:
+\\- it is still possible but no more entirely true that Luigi is a person;
+\\- it is still entirely true that this pizza is some food, even if Luigi did not eat it, because it is true that it is a pizza, which is food;
+\\ which is what is obtained by the implementation as readable on the open-source tiny experiment output.
+
+Another interesting aspect is the calculation of the standard deviation of the level of noise modeling what happens at the mesoscopic level for either calculation of similarity between two random vectors or unbinding operations. On one hand, our macroscopic model is in coherence with \cite{schlegel_comparison_2020} which obtains (from the paper'Fig.4) for the VTB representation:
+\eqline{d \gtrapprox 32 \, (s + 0.575)}
+as a minimal dimension $d$ to obtain 99\% accuracy with the bundling of size $s$, using similarity calculation to extract vectors from the bundling. Our model does not take the negligible bias $0.575$ into account but allows us to calibrate to $\sigma \simeq \frac{0.016}{d}$ the level of noise, in order to perform a simple test of z-score under the normal hypothesis:
+\eqline{\tau > 2 \, \sigma}
+to decide if the related $\tau$ value of the similarity is distinguishable from the noise. On the reverse we consider that two vectors are not similar if the similarity is below the noise standard deviation, preferring a more conservative threshold.
+
+A step further we also implemented the $(1/d^{1/4})$ noise dependency for unbinding, with the same calibration, and it would be interesting to further investigate at the mesoscopic level, the numerical precision unbinding on associative maps, whereas up to our best knowledge, it is not studied in the papers quoted here.
+
+Far from being complete, this macroscopic implementation of an algorithmic ersatz of VSA mesoscopic operations seems sound and coherent with previous results. It has a final non-negligible advantage: It is quite ``simple'' in the sense that it did not require very complicated or twisted mechanisms, a bit more than 500 lines of formatted C++ code, including formal symbolic operations on the algebraic operators.
+
+\subsection{Discussion: Analysis of a mesoscopic level implementation}\label{nengo}
+
+Let us now discuss how, considering the NEF methodology \cite{eliasmith_how_2013} as implemented in the Nengo platform \cite{bekolay_nengo_2014}, the previous mechanisms can be implemented at the mesoscopic level. Such an implementation has already been proposed in \cite{mercier_ontology_2021} for the class inheritance \textit{rdfs9} detailed in this paper, as a question-answering system, thus working in backward mode. In order not to lengthen the present paper we do not detail again all implementation mechanisms and expected results, but simply explicitize the how to for this new approach. %Je sais pas si ça va passer mais je trouve ça délicieusement hypocrite … % en effet ^^"
+
+The present implementation works in forward mode, computing the fixed point of the inference loops. To this end, it is possible to create a Nengo vocabulary containing all the resources of our ontology encoded as vectors, and we stored asserted memberships and relationships between these resources into associative memories\footnote{\url{https://www.nengo.ai/nengo-spa/examples/associative-memory.html}}, one for each predicate. For the sake of simplicity we consider a simplified setup with $\tau = 1$ for each triple, while the use of approximate inference is also discussed in \cite{mercier_ontology_2021} with a Nengo implementation, also using the VTB operator\footnote{Or its transpose (TVTB) to manage left and right binding: \url{https://www.nengo.ai/nengo-spa/modules/nengo_spa.algebras.html\#nengo_spa.algebras.tvtb_algebra.TvtbAlgebra}.}.
+
+The RDFS entailment rules are implemented as feedback computation, the retro-action enriching the associative memory's contents, as schematized in Fig.~\ref{architecture_aristotle}. We illustrate here the network connections for \textit{rdfs9} entailements (in forward mode), but similar networks can be implemented for the other rules. 
+\\- Two input cues are fed to the network (in this case initialized as TYPE and SUB\_CLASS\_OF because these are the predicates involved to apply the rule). 
+\\- Then each associative memory stores a chained list of all known triples for a given predicate. A feedback connection allows to use the last retrieved value as a key to the next value, allowing to enumerate the triples just like a relational map as discussed previously. Retrieved triples are successively stored into a state \footnote{\url{https://www.nengo.ai/nengo-spa/modules/nengo_spa.modules.html?highlight=state\#nengo_spa.modules.State}} which allows to pass data, in that case enumerate each input triple, thus acting as the input triple buffer of Fig.~\ref{tau-architecture}.
+\\ - An action selection module\footnote{\url{https://www.nengo.ai/nengo-spa/modules/nengo_spa.html?highlight=actionselection\#nengo_spa.ActionSelection}} (corresponding roughly to a conditional test) allows to nest the enumeration of the second associative memory, by detecting the end of the enumeration of the first associative memory.
+\\ - Then the rule itself is implemented by an interconnection similar to the one made explicit in Fig.~\ref{rdfs9-derivation}, and another selection module acting as a threshold gate triggers the addition of a new triple if the rule is applicable.
+
+
+\begin{sidewaysfigure}[htbp]
+\centerline{\includegraphics[width=0.9\textwidth]{figures/architecture_aristotle.png}}
+\caption{The Nengo architecture for the class inheritance \textit{rdfs9} forward inference rules, see text for details. Associative memories storing the relationships are represented in purple rectangles (one for each predicate of interest). We did not represent here the action selection module that triggers the enumeration of the second associative memory, but the one triggering the application of the rule is accounted for by the similarity test explicitized in the red diamond box. The rule itself requires to unbind the subject and object from the retrieved triple; this is done by unbinding with the superposition of all semantic pointers from the vocabulary (thanks to the distributivity of the VTB algebra), allowing to retrieve an isolated vector regardless of what it was bound to. Finally, simply binding the subject $s_j$ to the object $o_i$ allows to infer a new member ship (if the gating condition applies), as shown by the blue connections.}
+\label{architecture_aristotle}
+\end{sidewaysfigure}
+
+
+Other entailment rules are implemented using similar netowrks, noticing that the associative memories are shared between them, while enumeration mechanisms are generic, and only the inferred statement is specific to a given rules. The key point is that the whole computing process is distributed and ``programmed'' only by spatial inter-connections as expected.
+
+This shows that our macroscopic implementation can translate to what is proposed to represent biologically plausible processes at a level of representation that can be ``compiled'' as a set of interacting spiking neural networks \cite{eliasmith_how_2013}.
+
+\section{Discussion and conclusion}
+
+In this paper we have been able to propose, up to the implementation level, a reformulation of the powerful VSA approach with several add-ons:
+\\- Explicitizing a degree of belief for each knowledge item in link with the possibility theory related to modal logic.
+\\- Revisiting the main proposed abstraction of biologically plausible data structure encoding comparing them with usual programming data structures.
+\\- Proposing a new VSA data structure encoding a relational map, in link with hierarchical cognitive memory and allowing us to introduce also symbolic derivations.
+\\- Suggesting a design of forward reasoning mechanism implemented via connectivity feedback on relational data structures, allowing to perform deductively, but also to some extent inductive and abductive inductions.
+\\- Introduce the idea of simulating such a mechanism at a macroscopic more symbolic level in order to have computations independent of the VSA dimension space, thus allowing scaling up such mechanisms.
+
+Although these contributions are of some theoretical and practical interest, it is clear that this is only a preliminary work, far from covering all the modeling and representative power of VSA approaches. It is rather limited regarding several aspects: Although implementing inductive and abductive rule-based mechanisms has been evoked and argued, the work is still to be done. While the RDFS deductive mechanism can clearly be implemented in the present framework, more sophisticated segments of knowledge representation language such as the OWL 2 family are still to be explored to evaluate what can be implemented without extending the present mechanism. Last but not least limitation is the fact that, depending on the choice of the entailment rules, an unstable or unbounded number of triples could be generated. This latter caveat is easily avoided by our knowledge of the different levels of specifications of semantic inferences, with their related decidability and algorithm complexity properties.
+
+The algorithm itself is a simple closure mechanism, whereas indeed, much more efficient reasoning algorithms are available, (such as e.g., so-called ``tableau methods'') but up to our best understanding their link to biologically plausible mechanisms is really improbable, whereas we here show that a simple set of feedback on iterators makes the job, which is much closer to what is expected to happen in neural assemblies (see \cite{eliasmith_how_2013} for a general discussion).
+
+The macroscopic simulator is operational but actually only limited to monotonic entailment rules used in forward mode. We did not yet implement the capability to delete some rules because contradicted by new incoming facts, or backward reasoning. Both could be easily implemented as a direct extension of the proposed software package, as evoked in this paper, but both also require making the proper design choices in order for such more general behavior to be coherent.
+
+Following the usual VSA approaches, the symbolic information is embedded in a compact Riemannian manifold with a very simple topology, a hyper-sphere, and we have made explicit the fact that finally, the number of encodable symbols is rather limited. Other geometries may offer better performances, and in the particular hyperbolic embedding of hierarchical representations makes a profit of the fact that due to the hyperbolic negative curvature of the space, even exponentially growing data structure can be parsimoniously represented \cite{nickel_poincare_2017}, because of the expanding geometry (to make short a long story). The idea to embed data representation in non-Euclidean spaces and especially hyperbolic spaces have already been explored in detail, for instance in \cite{delahaye_complexites_2006}, showing that satisfiability and algorithmic complexity can be drastically different\footnote{A large audience version of these elements is available in this popularization scientific journal \href{https://interstices.info/calculer-dans-un-monde-hyperbolique}.} This might be an interesting extension of usual VSA approaches to consider the symbol's numerical embedding in such a Riemannian differential manifold. This could be a fruitful perspective of such work.
+
+
+\backmatter
+
+\bmhead{Acknowledgments}
+
+Terrence C. Stewart is gratefully acknowledged for inspiring advice that helped us with some aspects of this work. Gabriel Doriath Döhler is highly thanked for his work on clarifying the use of VTB-algebra and introducing interesting ideas during his undergraduate internship. Frédéric Alexandre and Hugo Chateau-Laurent are deeply acknowledged for their precious advices and their contribution to previous works on this subject. This work is supported by the \href{Inria, AEx AIDE}{https://team.inria.fr/mnemosyne/en/aide} exploratory action.
+
+\begin{appendices}
+
+\section{Using the VTB algebra} \label{VTB-algebra}
+
+Let us review the technical elements of the Vector-Derived Transformation Binding (VTB) used in this paper.
+
+Symbols are numerical grounding to real or complex vectors of quartic dimension $d$ and for the sake of simplicity, we will assume here that $d \defq (d')2 \defq (d'')^4$ for some integer $d''$. Let us develop here the algebra to manipulate such symbols at an abstract level. Following \cite{gosmann_vector-derived_2019} and completing their developments, we consider biologically a plausible algebraic framework, each numerical grounding corresponding to some distributed  activity of a spiking neuronal assemble and each algebraic operation to some transformation of this activity.
+
+We first consider the so-called Vector-derived Transformation (VTB) binding operation:
+\eqline{\mathbf{z} \defq \mathbf{B_y} \, \mathbf{x}}
+where $\mathbf{B_y}$ is block-diagonal matrix defined as, writing $d' \defq \sqrt{d}$:
+\eqline{\mathbf{B_y} \defq 
+\left[\begin{array}{cccc}
+    \mathbf{B_y'} &    0 & \dots &   0 \\
+       0 & \mathbf{B_y'} & \dots &    0 \\
+    \vdots & \vdots & \ddots & \vdots  \\
+       0 &    0 & \dots & \mathbf{B_y'}
+    \end{array}\right]
+\mbox{ with } 
+\mathbf{B_y'}  \defq  \sqrt{d'} \,
+\left[\begin{array}{cccc}
+    y_1            & y_2            & \dots  & y_{d'}  \\
+    y_{d' + 1}     & y_{d' + 2}     & \dots  & y_{2d'} \\
+    \vdots         & \vdots         & \ddots & \vdots  \\
+    y_{d - d' + 1} & y_{d - d' + 2} & \dots  & y_d
+\end{array}\right]}
+or equivalently\footnote{All algebraic derivations reported here are straightforward and verified using a piece of symbolic algebra code available at \url{https://raw.githubusercontent.com/vthierry/onto2spa/main/figures/VTB-algebra.mpl}}, for $i = 1 \cdots d$:
+\eqline{[\mathbf{z}]_i = \sqrt{d'} \, \sum_{k = 1}^{i = d'} [\mathbf{y}]_{k + \beta(i)} \;
+  [\mathbf{x}]_{k + \alpha(i)}
+\mbox{ writing } \left\{\begin{array}{rcl}
+  \alpha(i) &\defq& d' \, ((i-1) \mbox{ div } d') \\
+  \beta(i)  &\defq& d' \, ((i-1) \mbox{ mod } d') \\
+\end{array}\right.}
+with the matrix multiplication explicitized as a sum, as it can be easily verified. Here $[\mathbf{z}]_k$ stands for the k-th coordinate of the vector $\mathbf{z}$.
+
+This operation is bi-linear in $\mathbf{x}$ and $\mathbf{y}$, thus distributive with respect to addition.
+
+At the algorithmic implementation level, the calculation of $\mathbf{z}$ is performed in\footnote{Each of the $d$ components  $[\mathbf{z}]_i$ require a dot product of size $d' = \sqrt{d}$ which is not factorizable in the general case, since involving different elements of the vectors as readable on the matrix form.} $O\left(d^{\frac{3}{2}}\right)$ operations, and the $\mathbf{y}_{k + \beta[i]}$ and $\mathbf{x}_{k + \alpha[i]}$ indexing can be tabulated in two fixed look-up tables $\beta[i]$ and $\alpha[i]$ avoiding any additional calculations. Furthermore, the fact that $\sqrt{d'}$ is an integer allows limiting numerical approximations in order to improve numerical conditioning. This will be verified for all other explicit formulae in the sequel.
+We make explicit these formulae in detail not to re-implement these operations, already available in the Nengo simulator, but to study in detail their complexity, and also their precision, targeting to propose a macroscopic algorithmic ersatz of these operations.
+
+This can be compared to the fastest binding operation which is convolution implemented via fast Fourier transform \cite{schlegel_comparison_2020} thus in $O\left(d\, \log(d)\right)$:
+\\\centerline{\begin{tabular}{|l|c|c|c|c|}
+\hline
+            & d = 10     & d = 100    & d = 500   & d = 1000  \\
+\hline
+VTB         & $10^{1.5}$  & $10^3$     & $10^4$    & $10^{4.5}$ \\
+\hline
+Convolution & $10^{1.4}$  & $10^{2.6}$  & $10^{3.5}$ & $10^{3.8}$ \\
+\hline
+Ratio$=\frac{\sqrt{d}}{\log(d)}$ & $\simeq 1$ & $\simeq 2$ & $\simeq 3.5$ & $\simeq 4.5$ \\
+\hline
+\end{tabular}} \\
+
+As stated in \cite{gosmann_vector-derived_2019} and reviewed in \cite{mercier_ontology_2021} the key point is that this binding operation generates a new vector $\mathbf{z}$ almost orthogonal to $\mathbf{x}$ and $\mathbf{y}$ and this operation is neither commutative:
+\eqline{(\mathbf{B_y} \, \mathbf{x}) \cdot \mathbf{x} \simeq 0 \mbox{ and } (\mathbf{B_y} \, \mathbf{x}) \cdot \mathbf{y} \simeq 0 \mbox{ and } (\mathbf{B_x} \, \mathbf{y}) \cdot (\mathbf{B_y} \, \mathbf{x}) \simeq 0}
+nor associative\footnote{Of course, as a product of matrix, the combination of three binding or two binding and a vector is associative, but not the operator $\mathbf{B}$ itself as made explicit in the formula.}, in the following sense:
+\eqline{(\mathbf{B_{(B_z \, y)}} \, \mathbf{x}) \cdot ((\mathbf{B_z} \, \mathbf{B_y}) \, \mathbf{x}) \simeq 0}
+which are precious properties in order not to infer spurious derivations. These results come from the fact that these vector pairs are not aligned but have an orientation parameterized by random vectors. More precisely, two random normalized vectors drawn from a random normal distribution of independent samples verify ${\bf x} \cdot {\bf y} \sim {\mathcal N}(0, O(1/d))$, i.e., follows a centered normal distribution of negligible variance \cite{schlegel_comparison_2020}. A step ahead, when computing $\mathbf{B_y} \, \mathbf{x}$ we apply a permutation on all indices so that the result is no more correlated with the original vectors, thus corresponding to independent values, leading also to almost zero.
+% Beuh c'est pas très rigoureux mais bon, si on écrit les équations on finit par faire la même hypothèse "morale".
+
+A step further, in the real case, the random matrix is almost orthogonal, i.e.:
+\eqline{\mathbf{B_y^\top} \, \mathbf{B_y} \simeq \mathbf{I}}
+for the same reasons evoked just before. The issue is to evaluate the precision of this approximation, which is again in ${\mathcal N}(0, O(1/d))$\footnote{Because $\|\mathbf{y}\|=1$ the diagonal elements are exactly $1$, up to the machine numerical precision, while each non-diagonal element is the dot product of almost orthogonal random vectors, thus of the order of magnitude ${\mathcal N}(0, O(1/d))$. This last result is true because since the component of $\mathbf{y}$ are randomly drawn and independent a dot product of the components with a permutation of them is equivalent to computing the dot-product between two independent vectors.}.
+
+We can thus define:
+\eqline{\mathbf{B_{y^\sim}} \defq \mathbf{B_y^\top} \mbox{ with } [\mathbf{y^\sim}]_i \defq [\mathbf{y}]_{\sigma(i)}}
+with:
+\eqline{\sigma(i) \defq  1 + d' \, ((i-1) \mbox{ mod } d') + (i-1) \mbox{ div } d'}
+in words $\mathbf{B_y^\top}$ has the same structure as $\mathbf{B_y}$ except that the vector coordinates are subject to a permutation $\sigma(i)$ which is idempotent $\sigma(\sigma(i)) = i$, thus its own inverse, so that if 
+$\mathbf{z'} \defq \mathbf{B_{y^\sim}} \, \mathbf{x}$ we obtain:
+\eqline{[\mathbf{z'}]_i = \sqrt{d'} \, \sum_{k = 1}^{k = d'} [\mathbf{y}]_{\sigma(k + \beta(i))} \; [\mathbf{x}]_{(k + \alpha(i))}} (where $\beta(i)$ and $\alpha(i)$ are the indexing defined to calculate $\mathbf{B_{y}} \, \mathbf{x}$ explicitly) and it allows to define a left unbinding operation:
+\eqline{\mathbf{B_{y^\sim}} \, (\mathbf{B_y} \, \mathbf{x}) = \mathbf{B_y^\top} \, \mathbf{B_y} \, \mathbf{x} \simeq \mathbf{x}
+  = \mathbf{x} + {\mathcal N}(\mathbf{0}, O(1/d)),}
+thus again, up to a precision\footnote{The vector unary $\mathbf{x}$ is multiplied by an identity matrix in which non-diagonal elements are corrupted by independent normal noises of the standard deviation of $O(1/d)$. The matrix multiplication result is thus a unary linear combination of normal noises, thus a normal noise of the same standard deviation.} of $O(1/d)$. In other words,  unbinding adds a noise of order of magnitude $O(1/d)$.
+
+The right identity vector $\mathbf{\mathbf{i}}$ such that $\mathbf{B_{\mathbf{i}}} = \mathbf{I}$, writes explicitly:
+\eqline{[\mathbf{\mathbf{i}}]_i = \frac{1}{\sqrt{d'}} \, \delta_{i = \sigma(i)}}
+In other words, we get $i_B$ by ``unfolding'' the identity matrix $I_d'$ line by line, writing a $1$, then $d$ times $0$, another $1$, and so on.
+
+Considering the mirroring matrix $\mathbf{B_{\leftrightarrow}}$ defined as:
+\eqline{[\mathbf{B_{\leftrightarrow}}]_{ij} \defq \delta_{j = \sigma(i)}}
+(with is thus not block-diagonal as a matrix of the form $\mathbf{B_y}$ are), so that $\mathbf{B_{\leftrightarrow}} \, \mathbf{x} = \mathbf{x}^\sim$, we obtain:
+\eqline{\mathbf{B_{\leftrightarrow}} \, \mathbf{B_y} \, \mathbf{x} = \mathbf{B_x} \, \mathbf{y}
+\mbox{ while } \mathbf{B_{\leftrightarrow}} \,\mathbf{B_{\leftrightarrow}} = \mathbf{I} \mbox{ and } \mathbf{B_{\leftrightarrow}^\top} = \mathbf{B_{\leftrightarrow}}.}
+which allows defining a right unbinding operation:
+\eqline{(\mathbf{B_{x^\sim}} \, \mathbf{B_{\leftrightarrow}}) \, (\mathbf{B_y} \, \mathbf{x}) = \mathbf{B_{x^\sim}} \, \mathbf{B_x} \, \mathbf{y} \simeq \mathbf{y}}
+
+Unfortunately, $\mathbf{B_{\leftrightarrow}}$ is not a binding matrix, i.e., is not of the form $\mathbf{B_z}$ for some vector $\mathbf{z}$, which is easily verified by the fact that some components that must be equal to $0$ for a binding matrix are equal to $1$ in $\mathbf{B_{\leftrightarrow}}$. Furthermore, the left or right multiplication of a binding matrix by this mirroring matrix does not yield a binding matrix, because of the same observation that components that must be equal to $0$ for a binding matrix are equal to $1$ in $\mathbf{B_{\leftrightarrow}}$.
+
+Beyond \cite{gosmann_vector-derived_2019}, \cite{mercier_ontology_2021} have introduced a vector composition operator $\oslash$ making explicit the composition of two binding operations, namely:
+\eqline{\mathbf{B_v} = \mathbf{B_y} \, \mathbf{B_x} \Leftrightarrow \mathbf{v} \defq \mathbf{y} \oslash \mathbf{x}}
+which explicitly writes \footnote{Since $\mathbf{B_y}$ and $\mathbf{B_x}$ are block diagonal matrices, it is easy to verify that $\mathbf{B_v}$ is a block diagonal matrix with $d' \times d')$ block $\mathbf{B_v}' = \mathbf{B_y}' \, \mathbf{B_x}'$ using the notations of the beginning of this section, and we can explicit that:
+\eqline{[\mathbf{B_v}']_{ij} = \sqrt{d'} \, \sqrt{d'} \, \sum_{k = 1}^{d'} [\mathbf{y}]_{k + (i - 1) \mbox{ div } d'} \, [\mathbf{x}]_{(k - 1) \, d' + j},}
+from which we obtain the desired formula.}:
+\eqline{[\mathbf{v}]_i = \sqrt{d'} \, \sum_{k = 1}^{k = d'} [\mathbf{y}]_{(i - 1) \, d' + k} \, [\mathbf{x}]_{1 + d' \, (k - 1) + (i - 1) \mbox{ mod } d'}}. At the algebraic level, the key point is that the product of two binding matrices is still a binding matrix. As a consequence this composition operator is bi-linear, thus distributive with respect to the addition, it is not commutative, but is associative, and commutes with the inversion as follows:
+\eqline{(\mathbf{y} \oslash \mathbf{x})^\sim = \mathbf{x}^\sim \oslash \mathbf{y}^\sim}
+while $\mathbf{x}^\sim \oslash \mathbf{x} \simeq \mathbf{\mathbf{i}}$, all these results are easily derived considering usual matrix properties. This allows us to combine two binding matrices without explicit matrix product, but also in $O\left(d^{\frac{3}{2}}\right)$ operations only. At the numeric level, since $\mathbf{v}$ is up to a $\sqrt{d'}$ factor the dot product of segments of random vectors of dimension $d'$ follows a normal distribution of standard-deviation $O(1/d')$ we also obtain that:
+\eqline{[\mathbf{v}]_i = {\mathcal N}(\mathbf{0}, O(1/\sqrt{d'})),}
+which is a rather high level of noise, when applying an unbinding operation, for instance to an associative map.
+
+\subsection*{Using the VTB algebra in the complex case.}
+
+All developments of this section generalize to complex numbers. Although not directly used here, such a generalization is of general interest, because complex implementations of VSA frameworks have also been considered \cite{schlegel_comparison_2020}.
+
+Stating that two resources are semantically equivalent if the unary vectors are aligned writes in the complex case\footnote{If we are in the real case $\mathbf{x}$ and $\mathbf{y} \in {\mathcal R}^d$, with $\|{\bf x}\|_2 = \|{\bf y}\|_2 = 1$, then the equality writes
+\eqline{\mathbf{x} = \mathbf{y} \Leftrightarrow \mathbf{x} \cdot \mathbf{y} = \sum_i x_i \, y_i = \cos\left(\widehat{\overrightarrow{\mathbf{x}} \, \overrightarrow{\mathbf{y}}}\right) = 1 \Leftrightarrow \widehat{\overrightarrow{\mathbf{x}} \, \overrightarrow{\mathbf{y}}} = 0 \; (\mbox{mod} \; 2 \, \Pi),}
+i.e., both unary vectors have the same direction, i.e., are aligned.
+If we are in the complex case $\mathbf{x}$ and $\mathbf{y} \in {\mathcal C}^d$, let us consider the canonical embedding in ${\mathcal R}^{2\,d}$, i.e., the real $Re$ and imaginary $Im$ parts as two real coordinates, writing $\overrightarrow{\mathbf{x}}$ the corresponding vector:
+\eqline{\mathbf{x} \defq \left(x_1, x_2, \cdots \right)^T \Leftrightarrow \overrightarrow{\mathbf{x}} \defq \left(Re(x_1), Im(x_1), Re(x_2), Im(x_2), \cdots\right)^T,}
+for which, writing $z^*$ the conjugate of a complex number $z$, while $<\mathbf{x} \vert \mathbf{y}>$ stands for the complex inner product:
+\eqline{\begin{array}{rcl}<\mathbf{x} \vert \mathbf{y}> 
+&\defq& \sum_i x_i \, y_i^* \\
+&=& \sum_i 
+  (Re(x_i) \, Re(y_i) + Im(x_i) \, Im(y_i)) + I \, (Re(x_i) \, Im(y_i) - Im(x_i) \, Re(y_i)) \\
+&=&
+  \overrightarrow{\mathbf{x}} \cdot \overrightarrow{\mathbf{y}} + I \, 
+  \overrightarrow{\mathbf{x}}^* \cdot \overrightarrow{\mathbf{y}}
+\end{array}}
+so that $Re(<\mathbf{x} \vert \mathbf{y}>) = \overrightarrow{\mathbf{x}} \cdot \overrightarrow{\mathbf{y}}$, $\|\mathbf{x}\| = \sqrt{<\mathbf{x} \vert \mathbf{x}>} = \|\overrightarrow{\mathbf{x}}\|-2 = \sqrt{\overrightarrow{\mathbf{x}} \cdot \overrightarrow{\mathbf{x}}}$ and since vectors are unary: 
+\eqline{<\mathbf{x} \vert \mathbf{y}> = 1 \Leftrightarrow \overrightarrow{\mathbf{x}} \cdot \overrightarrow{\mathbf{y}} = 1 \Leftrightarrow \overrightarrow{\mathbf{x}} = \overrightarrow{\mathbf{y}} \Leftrightarrow \mathbf{x} = \mathbf{y},}
+making explicit the obvious fact that unary real or complex vectors are equal if and only if their inner product equals one, while we consider the ``angle'' of two complex vectors as the angle of their $2\,d$ real embedding, i.e.:
+\eqline{\widehat{\mathbf{x} \, \mathbf{y}} \defq \mbox{arccos}(Re(<\mathbf{x} \vert \mathbf{y}>)).}}: 
+\eqline{\mathbf{x} \simeq \mathbf{y} \Leftrightarrow <\mathbf{x} \vert \mathbf{y}> \simeq 1.
+% https://mathcs.clarku.edu/~ma130/inner2.pdf
+} while the orientation is usually defined as:
+\eqline{\widehat{\mathbf{x} \, \mathbf{y}} \defq \mbox{arccos}(Re(<\mathbf{x} \vert \mathbf{y}>)).}
+as detailed in the previous footnote.
+
+Provided that the space dimension $d$ is large enough, two randomly chosen different complex vectors $\mathbf{x}$ and $\mathbf{y}$, will be also\footnote{
+Considering again the canonical embedding in ${\mathcal R}^{2\,d}$ and the fact that
+\eqline{<\mathbf{x} \vert \mathbf{y}> = \overrightarrow{\mathbf{x}} \cdot \overrightarrow{\mathbf{y}} + I \, 
+  \overrightarrow{\mathbf{x}^*} \cdot \overrightarrow{\mathbf{y}},}
+because $\overrightarrow{\mathbf{x}}$ thus $\overrightarrow{\mathbf{x}}^*$ and $\overrightarrow{\mathbf{y}}$ are random vectors their dot product almost vanishes, thus the real and imaginary part of $<\mathbf{x} \vert \mathbf{y}>$ also.} approximately orthogonal in the sense that:
+\eqline{\mathbf{x} \neq \mathbf{y} \Leftrightarrow <\mathbf{x} \vert \mathbf{y}> \simeq 0.}
+As a consequence, the VTB matrix is almost a unitary matrix, i.e., 
+\eqline{\mathbf{B_y}^* \, \mathbf{B_y} \simeq \mathbf{I}}
+considering now the conjugate transpose.
+
+All other algebraic operations are common to both real or complex linear algebra, and this to also the case for other VSA binding operators.
+
+More than a confirmation, these derivations allow us to observe that using a complex representation would be interesting if the conjugate of a vector could have a semantic interpretation. In that case if, say, $\mathbf{x}$ and $\mathbf{y}^*$ are similar then $<\mathbf{x} \vert \mathbf{y}> \simeq I$, as easily verified from the previous development. 
+
+\section{RDFS entailment rules implementation} \label{RDFS-entailment-rules}
+
+As a side-product of the present development, we would like to illustrate the computational capability of the proposed framework, by briefly showing that our biologically plausible mechanism is at least able to perform RDFS\footnote{According to the \url{https://www.w3.org/TR/rdf-schema} specification.} specification inferences, without any assumption about the fact this could occur as it in our brain\footnote{Considering knowledge representation and reasoning, the capabilities of Semantic Web modeling languages, such as RDFS (Resource Description Framework Schema) and OWL (Web Ontology Language) (see, e.g. \cite{allemang_semantic_2020} for a recent didactic reference) is a powerful way of solving modeling problem and manipulate high-level data representation. It appears also to be rather accessible to an educated person, as pointed out in \cite{allemang_semantic_2020}, and corresponds for a certain part to usual common sense formalization, for instance, the notion of class (e.g., Garfield is a cat, that is an animal, that is a living organism). The brain is capable of such reasoning, as discussed in the paper introduction, through the data representation and processing mechanism is obviously different from what is performed in semantic web modelers and reasoners, while the brain is mainly doing induction and abduction, more than deduction, as reviewed here.}.
+
+\subsection*{RDFS modeling in a nutshell}
+
+In order to represent symbolic information the RDFS knowledge representation is based on the RDF data model, which represents knowledge  as triples, as made explicit, in Fig.~\ref{triple}. More precisely, the \emph{universe of discourse} is made of \emph{resources}, referenced by some universal resource identifier (IRI), i.e. a fixed lexical token. To structure this universe of discourse, we consider: \begin{enumerate}[label=(\roman*)]
+    \item \emph{individuals} that refer to real-world concrete or abstract objects, or 
+    \item \emph{literals} to characterize individuals using data attributes, i.e., numerical values, character strings, or any structured information such as dates
+    \item \emph{concepts} and \emph{roles} (namely \emph{classes} and \emph{properties}) that allow to structure the knowledge about individuals.
+\end{enumerate}
+
+In fact, in our context which is outside the web semantic application field, we have to point out that the RDF/RDFS framework, has to be considered with the following variants:
+\begin{itemize}
+    \item we conflate \emph{name} with both IRI and blank node since on the one hand blank node can be eliminated,\footnote{Using a standard process related to skolemisation.} and on the other hand because we only process the information locally at this stage, thus avoiding considering all issues regarding distributed information between different sources;
+    \item we do not consider (i) semantic web specific literal (e.g., \texttt{rdf:XMLLiteral}), or (ii) utility and annotation or other human targeted  properties (e.g., \texttt{rdfs:seeAlso}) at this stage;
+    \item we will introduce both containers, i.e., ordered or unordered sequences, and collections, i.e., chained lists, later in these specifications, but in a somehow different form, adapted to the numerical representation and obvious to map on RDF representations;
+    \item we do not consider all XSD datatype, but will introduce a precise notion of numerical values and will detail how to represent structured data in our framework.
+\end{itemize}
+
+Given the capability of stating facts, the RDFS framework allows to structure concepts, using the following construct:
+\\ - The notion of class inheritance (e.g., if Tom is a cat, and cats are animals, Tom is an animal), allows us to define a hierarchical taxonomy of classes, structure the objects in categories, and infer all that is possible from this taxonomy.
+\\ - The notion of property inheritance (e.g., if Tom is the brother of Jerry, Tom is in the same family as Jerry, the property of being in the same family is a super-property of being the brother), which allows structuring properties, and also infer new properties by inheritance.
+\\ - The notion of domain and range (e.g, if Tom is the brother of Jerry, it also means that Tom is a boy), that allows classes for subjects and/or objects of a category.
+
+The language also allows us to define additional information, such as human readable elements, but we consider it as a demonstrative subset to consider the main notions reviewed here.
+
+\subsection*{Generality of numeric entailment rule implementation} \label{RDFS-entailment-rules-2}
+
+The RDFS entailment, i.e., all that can be logically deduced from the input information, define which elements are well-formed and which entailment relations allow deducing all derived information. In the case of RDFS it is given in Table~\ref{rdfs-entailment-rules}. It appears that each rule can be implemented with the proposed mechanism of section~\ref{transformation}, for instance:
+
+- The \textit{rdfs9}  class inheritance entailment rule:
+\eqline{(\$s \; \texttt{rdf:type} \; \$c_1 .) \wedge (\$c_1 \; \texttt{rdfs:subClassOf} \; \$c_2 .) \Rightarrow (\$s \; \texttt{rdf:type} \; \$c_2 .)}
+that states that if any subject $\$s$ belongs to the class $\$c_1$ and this class $\$c_1$ is a subclass of $\$c_2$, then $\$s$ also belongs to the class $\$c_2$, as taken as major example in subsection~\ref{inheritance}.
+
+- The \textit{rdfs2} rule allowing to infer the subject domain class:
+\eqline{(\$s_1 \; \$p_1 \; \$o_1 .) \wedge (\$p_1 \; \texttt{rdfs:domain} \; \$o_2 .) \Rightarrow (\$s_1 \; \texttt{rdf:type} \; \$o_2 .)}
+yields to:
+\eqline{(\$s_1 \; \$p_1 \; \$o_1 .) \wedge (\$s_2 \; \$p_2 \; \$o_2 .) \Rightarrow (\$s_1 \; \tau \; \texttt{rdf:type} \; \$o_2 .)}
+with:
+\eqline{\tau \defq (\$p_1 \cdot \$s_2) \And (\$p_2 \cdot \texttt{rdfs:domain})}
+
+- The \textit{rdfs3} rule allowing to infer the object range class:
+\eqline{(\$s_1 \; \$p_1 \; \$o_1 .) \mbox{ and } (\$p_1 \; \texttt{rdfs:range} \; \$o_2 .) \Rightarrow (\$o_1 \; \texttt{rdf:type} \; \$o_2 .)}
+yields to:
+\eqline{(\$s_1 \; \$p_1 \; \$o_1 .) \wedge (\$s_2 \; \$p_2 \; \$o_2 .) \Rightarrow (\$o_1 \; \tau \; \texttt{rdf:type} \; \$o_2 .)}
+with:
+\eqline{\tau \defq (\$p_1 \cdot \$s_2) \And (\$p_2 \cdot \texttt{rdfs:range})}
+
+- The \textit{rdfs7} rule allows to infer sub-property inheritance:
+\eqline{(\$s_1 \; \$p_1 \; \$o_1 .) \mbox{ and } (\$p_1 \; \texttt{rdfs:subPropertyOf} \; \$o_2 .) \Rightarrow (\$s_1 \; \$o_2 \; \$o_1 .)}
+yields to:
+\eqline{(\$s_1 \; \$p_1 \; \$o_1 .) \wedge (\$s_2 \; \$p_2 \; \$o_2 .) \Rightarrow (\$s_1 \; \tau \; \$o_2 \; \$o_1 .)}
+with:
+\eqline{\tau \defq (\$p_1 \cdot \$s_2) \And (\$p_2 \cdot \texttt{rdfs:subPropertyOf})}
+
+This easily generalizes to all pertinent rules in table~\ref{rdfs-entailment-rules}. We also notice that the left-hand side contains only one or two triple patterns, as stated in the main paper. In details:
+\\- The \textit{se1}, \textit{se2}, \textit{lg},  and \textit{gl} rules are technical rules related to the management of blank node and literal allocation, not considered in our context. Similarly, the \textit{rdf2} applies to XML literal not considered here.
+\\- The \textit{rdf1}, \textit{rdfs1}, \textit{rdf4a}, \textit{rdf4b}, \textit{rdfs8}, \textit{rdfs12}, \textit{rdfs13} are unary rules that state basic meta-property of the language, obvious to implement.
+\\ - The \textit{rdfs10} and \textit{rdfs11} implement the reflexivity and transitivity of classes (thus very similar to \textit{rdfs9}) rules, again obvious and similar to implement.
+\\ - The \textit{rdfs6} and \textit{rdfs5} implements the reflexivity and transitivity of properties, while \textit{rdfs7} is equivalent to \textit{rdfs9} but for property inheritance, thus again very similar.
+
+\begin{sidewaystable}[ht]
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllll@{}}
+\toprule
+\textbf{Rule set}                            & \textbf{Rule Name}          & \textbf{If E contains:}                                                                                                                    & \textbf{then add:}                                                                                                                               &  \\ \midrule
+\multirow{2}{*}{simple entailment rules}     & \textit{se1}                         & \texttt{uuu aaa xxx .}                                                                                                                              & \begin{tabular}[c]{@{}l@{}}\texttt{uuu aaa \_:nnn .}\\  where \texttt{\_:nnn} identifies a blank node \\allocated to xxx by rule \textit{se1} or \textit{se2}.\end{tabular}            &  \\
+                                             & \textit{se2}                         & \texttt{uuu aaa xxx .}                                                                                                                              & \begin{tabular}[c]{@{}l@{}}\texttt{\_:nnn aaa xxx .}\\  where \texttt{\_:nnn} identifies a blank node \\allocated to uuu by rule \textit{se1} or \textit{se2}.\end{tabular}            &  \\
+special case of rule \textit{se1} for literals        & lg (literal generalization) & \texttt{uuu aaa lll .}                                                                                                                              & \begin{tabular}[c]{@{}l@{}}\texttt{uuu aaa \_:nnn .}\\  where \texttt{\_:nnn} identifies a blank node \\allocated to the literal \texttt{lll} by this rule.\end{tabular}      &  \\
+special case of rule \textit{se1} for literals (RDFS) & \textit{gl} (literal instanciation)  & \begin{tabular}[c]{@{}l@{}}\texttt{uuu aaa \_:nnn  .}\\  where \texttt{\_:nnn} identifies a blank node \\allocated to the literal \texttt{lll} by rule \texttt{lg}.\end{tabular} & \texttt{uuu aaa lll .}                                                                                                                                    &  \\
+\multirow{2}{*}{RDF entailment rules}        & \textit{rdf1}                        & \texttt{uuu aaa yyy .}                                                                                                                              & \texttt{aaa rdf:type rdf:Property .}                                                                                                                      &  \\
+                                             & \textit{rdf2}                        & \begin{tabular}[c]{@{}l@{}}\texttt{uuu aaa lll .}\\  where \texttt{lll} is a well-typed XML literal .\end{tabular}                                           & \begin{tabular}[c]{@{}l@{}}\texttt{\_:nnn rdf:type rdf:XMLLiteral .}\\  where \texttt{\_:nnn} identifies a blank node \\allocated to \texttt{lll} by rule \textit{lg}.\end{tabular}    &  \\
+\multirow{14}{*}{RDFS entailment rules}      & \textit{rdfs1}                       & \begin{tabular}[c]{@{}l@{}}\texttt{uuu aaa lll .}\\  where \texttt{lll} is a plain literal (with or \\without a language tag).\end{tabular}                     & \begin{tabular}[c]{@{}l@{}}\texttt{\_:nnn rdf:type rdfs:Literal .}\\  where \texttt{\_:nnn} identifies a blank node \\allocated to \texttt{lll} by rule \textit{lg}.\end{tabular} &  \\
+                                             & \textit{rdfs2}                       & \begin{tabular}[c]{@{}l@{}}\texttt{aaa rdfs:domain xxx .}\\  \texttt{uuu aaa yyy .}\end{tabular}                                                             & \texttt{uuu rdf:type xxx .}                                                                                                                               &  \\
+                                             & \textit{rdfs3}                       & \begin{tabular}[c]{@{}l@{}}\texttt{aaa rdfs:range xxx .}\\  \texttt{uuu aaa vvv .}\end{tabular}                                                              & \texttt{vvv rdf:type xxx .}                                                                                                                               &  \\
+                                             & \textit{rdfs4a}                      & \texttt{uuu aaa xxx .}                                                                                                                              & \texttt{uuu rdf:type rdfs:Resource .}                                                                                                                     &  \\
+                                             & \textit{rdfs4b}                      & \texttt{uuu aaa vvv .}                                                                                                                               & \texttt{vvv rdf:type rdfs:Resource .}                                                                                                                     &  \\
+                                             & \textit{rdfs5}                       & \begin{tabular}[c]{@{}l@{}}\texttt{uuu rdfs:subPropertyOf vvv .}\\  \texttt{vvv rdfs:subPropertyOf xxx .}\end{tabular}                                       & \texttt{uuu rdfs:subPropertyOf xxx .}                                                                                                                     &  \\
+                                             & \textit{rdfs6}                       & \texttt{uuu rdf:type rdf:Property .}                                                                                                                & \texttt{uuu rdfs:subPropertyOf uuu .}                                                                                                                     &  \\
+                                             & \textit{rdfs7}                       & \begin{tabular}[c]{@{}l@{}}\texttt{aaa rdfs:subPropertyOf bbb .}\\  \texttt{uuu aaa yyy .}\end{tabular}                                                      & \texttt{uuu bbb yyy .}                                                                                                                                    &  \\
+                                             & \textit{rdfs8}                       & \texttt{uuu rdf:type rdfs:Class .}                                                                                                                  & \texttt{uuu rdfs:subClassOf rdfs:Resource .}                                                                                                              &  \\
+                                             & \textit{rdfs9}                       & \begin{tabular}[c]{@{}l@{}}\texttt{uuu rdfs:subClassOf xxx .}\\  \texttt{vvv rdf:type uuu .}\end{tabular}                                                    & \texttt{vvv rdf:type xxx .}                                                                                                                               &  \\
+                                             & \textit{rdfs10}                      & \texttt{uuu rdf:type rdfs:Class .}                                                                                                                  & \texttt{uuu rdfs:subClassOf uuu .}                                                                                                                        &  \\
+                                             & \textit{rdfs11}                      & \begin{tabular}[c]{@{}l@{}}\texttt{uuu rdfs:subClassOf vvv .}\\  \texttt{vvv rdfs:subClassOf xxx .}\end{tabular}                                             & \texttt{uuu rdfs:subClassOf xxx .}                                                                                                                        &  \\
+                                             & \textit{rdfs12}                      & \texttt{uuu rdf:type rdfs:ContainerMembershipProperty .}                                                                                            & \texttt{uuu rdfs:subPropertyOf rdfs:member .}                                                                                                             &  \\
+                                             & \textit{rdfs13}                      & \texttt{uuu rdf:type rdfs:Datatype .}                                                                                                               & \texttt{uuu rdfs:subClassOf rdfs:Literal .}                                                                                                               &  \\ \cmidrule(l){1-5} 
+\end{tabular}
+}
+\caption{The RDF/RDFS entailment rules, reproduced from \href{https://www.w3.org/TR/rdf11-mt}{https://www.w3.org/TR/rdf11-mt}.}
+\label{rdfs-entailment-rules}
+\end{sidewaystable}
+
+\section{Implementation at the macroscopic scale} \label{Algorithmic-ersatz}
+
+This Vector Symbolic Architecture (VSA) when implemented using the Neural Engineering Framework (NEF) allows a microscopic simulation of the neuronal processes, at the spiking neuronal network level, of the memorization and processing operations, for which we have developed an abstract symbolic description previously. At a higher scale, when implemented as described in Appendix~\ref{VTB-algebra} using linear algebra and permutation operations, we are at a mesoscopic scale allowing us to perform the same operations, but without explicitizing the neuronal state value and evolution. This is one major advantage of this class of approaches.
+
+A step further, at a higher macroscopic scale, we could directly consider the previous operations predicting the result of the different algebraic operations without explicitly working at the vector component level. Let's briefly sketch out how this can be designed and implemented, using what could be called an ``algorithmic ersatz''.
+
+\subsection*{Symbol indexing}
+
+In VSA, each symbol of the vocabulary is associated with a $d$-dimensional random vector. At the macroscopic scale, we only need to register each symbol by an index, incremented for each new symbol. Weighted symbols have also a ``belief'' value $\tau$ as discussed previously, equal to $1$ by default. They also are estimated up to a certain standard deviation $\sigma$, equal to $0$ by default, as discussed in the next paragraph. Two symbols may thus have the same index but with a different belief level, or different noise level. At the input/output level, only, a human-readable string representation of the symbol is associated. The associative table of symbols is a thus simple associative array data structure, with an index $i$, a level of belief $\tau_i$, a noise level $\nu_i$, a string $s_i$, without explicitizing the vector value $\mathbf{x}_i$.
+
+\subsection*{Symbol noise derivation}
+
+Calculations are made up to the floating point machine precision, not taken into account here, but two of the operations are approximate and rely on the fact we consider random vectors in a high dimensional space: dot-product used to calculate similarity, as detailed in section~\ref{encoding}, and approximation of matrix inverse by its transpose, for unbinding, as detailed Appendix~\ref{VTB-algebra}.
+
+We must thus consider a level of noise, for each symbol, and update this level of noise for each calculation. This can not be neglected, because we also introduce a level of belief value that can be small, thus not negligible with respect to the noise level.
+
+Let us assume that in the input of the calculations, this noise is a centered normal distribution of standard deviation $\sigma_i$, written $\nu_i(\sigma_i)$, we are going to see that up to the first order it is still a centered normal distribution, on output. We write $\sigma_\bullet \defq O(1/d)$ the order of magnitude added by an approximate operation, as discussed in this paper.
+
+On the one hand, for $\mathbf{x}_i \perp \mathbf{x}_j$, considering the similarity operation between two symbols, we can write:
+\eqline{((\tau_i \, \mathbf{x}_i + \nu_i(\sigma_i)) \cdot (\tau_j \, \mathbf{x}_j + \nu_j(\sigma_j)) = \nu(\sigma_i + \sigma_j + \sigma_\bullet),}
+thus considering that the noise is independent of the values of $\tau_i$ and $\tau_j$ and up to the first order, i.e., neglecting $\nu_i(\sigma_i) \, \nu_j(\sigma_j)$. For two independent symbols, this thus will simply add the two level of noise, plus the noise generated by the operation. We thus can perform this operation without explicitly computing the dot-product\footnote{If $\mathbf{x}_i = \mathbf{x}_j$ it is obvious to verify that we obtain $\tau_i * \tau_j + \nu(\sigma_i \, \tau_j + \sigma_j \, \tau_i)$ up to the first order, and considering an upper bound for the noise.}.
+
+On the other hand, considering the unbinding operation of a binded value writes:
+\eqline{\begin{array}{l}\mathbf{B}_{(\tau_i \, \mathbf{x}_i^\sim + \nu_i(\sigma_i))} \, \left[\mathbf{B}_{(\tau_{i'} \, \mathbf{x}_i + \nu_i(\sigma_{i'}))} \, (\tau_j \, \mathbf{x}_j + \nu_j(\sigma_j)) \right] = \\ \;\;\;\;\;\; \tau_i \, \tau_{i'} \, \tau_j \, \mathbf{x}_j + \nu_j(\sigma_i + \sigma_{i'} + \sigma_{j} + \sigma_\bullet),\end{array}}
+again up to the first order.
+
+We also notice that due to our first order formulae, the level of noise is always an integer multiple of $\sigma_\bullet$ which simply counts the number of approximate operations.
+
+This design choice is conservative with respect to a mesoscopic implementation, because it increases the noise at each operation, whereas at the mesoscopic level each numerical random vector is drawn once, thus depending on the combination of operations, the noise may not increase. We consider here that noise must be added at each step, and wonder if it is not more realistic than a freeze noise value, although it would have been possible (but quite heavy) to consider freezing noise values and cache them in some table.
+
+\subsection*{Compounded symbols}
+
+Given atomic symbols randomly drawn, enumerating operations given in Appendix~\ref{VTB-algebra}, we have to compute compounded symbols composed through bundling, binding (or unbinding if the symbol has been permutated), while in order to compute entailment rules we need to be able to compute the similarity between any of these compounded symbols. 
+
+At the macroscopic level, since we use only linear algebra, it is straightforward to define an ``oracle'' that can calculate the result of all operations, as follows:
+\\- A symbol corresponding to the {\em bundling} of other symbols is fully defined by the symbol set and an operation over a bundling (binding or similarity) results from applying the operation on each element and considering either the bundling (in the case of binding) or numerical sum (in the case of similarity) of the result.
+\\- A symbol corresponding to the {\em binding} of one symbol onto another is fully defined by the symbols pair, and yields either a reduction if it is the corresponding unbinding operation or a binding combination.
+Details of the implementation are simple applications of the algebraic rules and we refer the reader to the documented source itself for further details\footnote{\hhref{https://line.gitlabpages.inria.fr/aide-group/macrovsa}.}.
+
+We may also consider the commutator operator $\mathbf{B_{\leftrightarrow}}$ or the composition operator $\oslash$, with similar considerations, but they are of little use at this stage of our work, at the implementation level, and not yet implemented.
+
+\end{appendices}
+
+%\bibliographystyle{sn-mathphys}
+\bibliography{AIDE}
+
+\end{document}
